@@ -1,0 +1,17 @@
+{
+  "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "status": {
+      "commandName": "Project",
+      "commandLineArgs": "status"
+    },
+    "http": {
+      "commandName": "Project",
+      "commandLineArgs": "--run-server 5000"
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json"
+}

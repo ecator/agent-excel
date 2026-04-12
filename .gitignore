@@ -1,0 +1,12 @@
+.vs/
+bin/
+obj/
+tests/
+*.csproj.user
+*.Development.json
+.env
+.vscode/
+.idea/
+*.suo
+TestResults/
+Thumbs.db
