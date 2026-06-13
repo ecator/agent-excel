@@ -1,7 +1,7 @@
 # Agent-Excel: Developer and AI Programming Guide
 
 ## 1. Project Positioning
-`AgentExcel` is a local Windows CLI tool specifically designed for AI Agents.
+`AgentExcel` is a local HTTP API service (accompanied by a lightweight CLI client) designed to control Microsoft Excel via RESTful APIs, specifically tailored for AI Agents.
 Its core mission is: **to enable AI to read and write Excel sheets currently open and operated by the user at high frequencies and extreme speeds via simple HTTP APIs.**
 
 ## 2. Core Architecture Design: Client-Daemon Mode
