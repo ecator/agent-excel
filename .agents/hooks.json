@@ -1,0 +1,15 @@
+{
+    "format": {
+        "PreInvocation": null,
+        "PostInvocation": null,
+        "PostToolUse": null,
+        "PreToolUse": null,
+        "Stop": [
+            {
+                "type": "command",
+                "command": "powershell -ExecutionPolicy Bypass -File scripts/format.ps1",
+                "timeout": 0
+            }
+        ]
+    }
+}

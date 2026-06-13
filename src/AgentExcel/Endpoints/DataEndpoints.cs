@@ -1,0 +1,89 @@
+using AgentExcel.Models;
+using AgentExcel.Services;
+using AgentExcel.Utils;
+
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+
+namespace AgentExcel.Endpoints;
+
+public static class DataEndpoints
+{
+    public static void MapDataEndpoints(this IEndpointRouteBuilder app)
+    {
+        var data = app.MapGroup("/data").WithOpenApi();
+
+        data.MapPost("/read-range", (ReadRangeRequest req, DataService dataService) =>
+            Results.Extensions.Yaml(new { values = dataService.ReadRange(req.Workbook, req.Sheet, req.Address) }))
+            .WithTags("Data")
+            .WithSummary("Read data from a range");
+
+        data.MapPost("/read-table", (ReadTableRequest req, DataService dataService) =>
+            Results.Extensions.Yaml(new { values = dataService.ReadTable(req.Workbook, req.Sheet, req.Name) }))
+            .WithTags("Data")
+            .WithSummary("Read data from an Excel Table (ListObject)");
+
+        data.MapPost("/convert-to-table", (ConvertToTableRequest req, DataService dataService) =>
+            Results.Extensions.Yaml(new { name = dataService.ConvertToTable(req.Workbook, req.Sheet, req.RangeAddress, req.TableName, req.HasHeaders) }))
+            .WithTags("Data")
+            .WithSummary("Convert a normal range to an Excel Table");
+
+        data.MapPost("/convert-to-range", (ConvertToRangeRequest req, DataService dataService) =>
+        {
+            dataService.ConvertToRange(req.Workbook, req.Sheet, req.TableName);
+            return Results.Extensions.Yaml(new { status = "converted" });
+        })
+        .WithTags("Data")
+        .WithSummary("Convert an Excel Table back to a normal range");
+
+        data.MapPost("/write-range", (RangeWriteRequest req, DataService dataService) =>
+        {
+            dataService.WriteRange(req.Workbook, req.Sheet, req.Address, req.Value);
+            return Results.Extensions.Yaml(new { status = "success" });
+        })
+        .WithTags("Data")
+        .WithSummary("Write data to a range");
+
+        data.MapPost("/write-formula", (WriteFormulaRequest req, DataService dataService) =>
+        {
+            dataService.WriteFormula(req.Workbook, req.Sheet, req.Address, req.Formula);
+            return Results.Extensions.Yaml(new { status = "success" });
+        })
+        .WithTags("Data")
+        .WithSummary("Write a formula to a range");
+
+        data.MapPost("/read-formula", (ReadRangeRequest req, DataService dataService) =>
+            Results.Extensions.Yaml(new { formula = dataService.ReadFormula(req.Workbook, req.Sheet, req.Address) }))
+            .WithTags("Data")
+            .WithSummary("Read the formula from a range");
+
+        data.MapPost("/find", (FindRequest req, DataService dataService) =>
+            Results.Extensions.Yaml(new { results = dataService.Find(req.Workbook, req.Sheet, req.RangeAddress, req.What, req.MatchCase, req.WholeWord) }))
+            .WithTags("Data")
+            .WithSummary("Find all occurrences of a string");
+
+        data.MapPost("/replace", (ReplaceRequest req, DataService dataService) =>
+            Results.Extensions.Yaml(new { success = dataService.Replace(req.Workbook, req.Sheet, req.RangeAddress, req.What, req.Replacement, req.MatchCase, req.WholeWord) }))
+            .WithTags("Data")
+            .WithSummary("Replace all occurrences of a string");
+
+        data.MapPost("/used-range", (UsedRangeRequest req, DataService dataService) =>
+            Results.Extensions.Yaml(new { address = dataService.GetUsedRangeAddress(req.Workbook, req.Sheet) }))
+            .WithTags("Data")
+            .WithSummary("Get the used range address");
+
+        data.MapPost("/grep", (GrepRequest req, DataService dataService) =>
+            Results.Extensions.Yaml(new { results = dataService.SearchInFolder(req.FolderPath, req.Pattern) }))
+            .WithTags("Data")
+            .WithSummary("Search for text in all Excel files within a folder (includes Cells, TextBoxes, and Shapes)");
+
+        data.MapPost("/set-style", (SetStyleRequest req, DataService dataService) =>
+        {
+            dataService.SetStyle(req.Workbook, req.Sheet, req.Address, req.Style);
+            return Results.Extensions.Yaml(new { status = "success" });
+        })
+        .WithTags("Data")
+        .WithSummary("Set cell styles (Font, Color, Bold, Alignment, etc.)");
+    }
+}
