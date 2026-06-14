@@ -40,6 +40,13 @@ public static class DataEndpoints
         .WithTags("Data")
         .WithSummary("Read data from an Excel Table (ListObject) in Markdown format");
 
+        data.MapPost("/rename-table", (RenameTableRequest req, DataService dataService) =>
+        {
+            dataService.RenameTable(req.Workbook, req.Sheet, req.Table, req.NewName);
+            return Results.Text($"{req.Table} has renamed to {req.NewName}");
+        })
+        .WithTags("Data")
+        .WithSummary("Rename an Excel Table (ListObject)");
 
         data.MapPost("/convert-to-table", (ConvertToTableRequest req, DataService dataService) =>
             Results.Extensions.Yaml(new { name = dataService.ConvertToTable(req.Workbook, req.Sheet, req.RangeAddress, req.TableName, req.HasHeaders) }))
@@ -99,5 +106,6 @@ public static class DataEndpoints
         })
         .WithTags("Data")
         .WithSummary("Set cell styles (Font, Color, Bold, Alignment, etc.)");
+
     }
 }

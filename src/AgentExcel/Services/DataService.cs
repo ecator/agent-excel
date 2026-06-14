@@ -721,6 +721,103 @@ public class DataService : ExcelServiceBase
         });
     }
 
+    public void RenameTable(string workbookName, string sheetName, string tableName, string newTableName)
+    {
+        if (string.IsNullOrWhiteSpace(tableName))
+        {
+            throw new ArgumentException("Table name cannot be null or empty.", nameof(tableName));
+        }
+        if (string.IsNullOrWhiteSpace(newTableName))
+        {
+            throw new ArgumentException("New table name cannot be null or empty.", nameof(newTableName));
+        }
+
+        ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.ListObjects? tables = null;
+            Excel.ListObject? targetTable = null;
+            Excel.Sheets? sheets = null;
+            try
+            {
+                wb = GetWorkbook(workbookName, createNew: true);
+                ws = GetWorksheet(wb, sheetName);
+                tables = ws.ListObjects;
+
+                foreach (Excel.ListObject t in tables)
+                {
+                    if (t.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        targetTable = t;
+                        break;
+                    }
+                    SafeReleaseComObject(t);
+                }
+
+                if (targetTable == null)
+                {
+                    throw new Exception($"Table '{tableName}' not found in sheet '{ws.Name}'.");
+                }
+
+                sheets = wb.Sheets;
+                foreach (object s in sheets)
+                {
+                    if (s is Excel.Worksheet worksheet)
+                    {
+                        Excel.ListObjects? sheetTables = null;
+                        try
+                        {
+                            sheetTables = worksheet.ListObjects;
+                            foreach (Excel.ListObject t in sheetTables)
+                            {
+                                try
+                                {
+                                    if (t.Name.Equals(newTableName, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        if (!t.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            throw new ArgumentException($"Table name '{newTableName}' is already in use by another table in the workbook.");
+                                        }
+                                    }
+                                }
+                                finally
+                                {
+                                    SafeReleaseComObject(t);
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            SafeReleaseComObject(sheetTables);
+                            SafeReleaseComObject(worksheet);
+                        }
+                    }
+                    else
+                    {
+                        SafeReleaseComObject(s);
+                    }
+                }
+
+                if (tableName.Equals(newTableName, StringComparison.OrdinalIgnoreCase) && tableName != newTableName)
+                {
+                    string tempName = newTableName + "_temp_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+                    targetTable.Name = tempName;
+                }
+
+                targetTable.Name = newTableName;
+            }
+            finally
+            {
+                SafeReleaseComObject(sheets);
+                SafeReleaseComObject(targetTable);
+                SafeReleaseComObject(tables);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
     private static string GetColumnLetter(int columnNumber)
     {
         int temp;

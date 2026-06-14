@@ -288,5 +288,79 @@ public class DataServiceTests : BaseTests
         Assert.That(listAll, Is.Not.Null);
         Assert.That(listAll, Is.Empty);
     }
+
+    [Test]
+    [Category("COM")]
+    public void RenameTable_WithValidNewName_RenamesSuccessfully()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "H1");
+        _service.WriteRange(_wbName, "Sheet1", "B1", "H2");
+        _service.ConvertToTable(_wbName, "Sheet1", "A1:B1", "TableToRename", true);
+
+        // Act
+        _service.RenameTable(_wbName, "Sheet1", "TableToRename", "NewTableName");
+
+        // Assert
+        var tables = _service.ListTables(_wbName, "Sheet1");
+        Assert.That(tables, Is.Not.Null);
+        Assert.That(tables["Sheet1"], Contains.Item("NewTableName"));
+        Assert.That(tables["Sheet1"], Does.Not.Contain("TableToRename"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void RenameTable_WhenTableDoesNotExist_ThrowsException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act & Assert
+        Assert.Throws<Exception>(() =>
+        {
+            _service!.RenameTable(_wbName, "Sheet1", "NonExistentTable", "NewName");
+        });
+    }
+
+    [Test]
+    [Category("COM")]
+    public void RenameTable_WithDuplicateName_ThrowsException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "H1");
+        _service.WriteRange(_wbName, "Sheet1", "B1", "H2");
+        _service.ConvertToTable(_wbName, "Sheet1", "A1:B1", "Table1", true);
+
+        _service.WriteRange(_wbName, "Sheet1", "D1", "H3");
+        _service.WriteRange(_wbName, "Sheet1", "E1", "H4");
+        _service.ConvertToTable(_wbName, "Sheet1", "D1:E1", "Table2", true);
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() =>
+        {
+            _service.RenameTable(_wbName, "Sheet1", "Table1", "Table2");
+        });
+    }
+
+    [Test]
+    [Category("COM")]
+    public void RenameTable_WithCaseOnlyChange_RenamesSuccessfully()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "H1");
+        _service.WriteRange(_wbName, "Sheet1", "B1", "H2");
+        _service.ConvertToTable(_wbName, "Sheet1", "A1:B1", "Table1", true);
+
+        // Act
+        _service.RenameTable(_wbName, "Sheet1", "Table1", "table1");
+
+        // Assert
+        var tables = _service.ListTables(_wbName, "Sheet1");
+        Assert.That(tables, Is.Not.Null);
+        Assert.That(tables["Sheet1"], Contains.Item("table1"));
+    }
 }
 
