@@ -4,7 +4,7 @@ $ExcelProcess = Get-Process -Name "excel" -ErrorAction SilentlyContinue
 if (-not $ExcelProcess) {
     Write-Host "Excel is not running. Starting Excel..."
     Start-Process excel
-    Start-Sleep -Seconds 3
+    Start-Sleep -Seconds 5
 }
 
 $TestPath = Resolve-Path $(Join-Path $PSScriptRoot "..\tests\AgentExcel.Tests")
