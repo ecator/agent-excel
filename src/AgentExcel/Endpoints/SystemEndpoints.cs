@@ -53,6 +53,6 @@ public static class SystemEndpoints
             return Results.Text("calculated");
         })
         .WithTags("System")
-        .WithSummary("Trigger a global calculation");
+        .WithOpenApi(operation => { operation.Summary = "Trigger a global calculation"; return operation; });
     }
 }

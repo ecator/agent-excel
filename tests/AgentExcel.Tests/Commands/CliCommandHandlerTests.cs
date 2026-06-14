@@ -258,4 +258,88 @@ public class CliCommandHandlerTests : BaseTests
         string output = outputWriter.ToString();
         Assert.That(output, Does.Contain($"Error: Daemon server is not running. Please start the server first by running '{exeName} start'."));
     }
+
+    [Test]
+    public async Task ShowApiCatalog_WhenDaemonNotRunning_PrintsError()
+    {
+        // Arrange
+        using var outputWriter = new StringWriter();
+        string exeName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "AgentExcel.exe");
+
+        // Act
+        await CliCommandHandler.ShowApiCatalog("127.0.0.1", null, outputWriter, null);
+
+        // Assert
+        string output = outputWriter.ToString();
+        Assert.That(output, Does.Contain($"Error: Daemon server is not running. Please start the server first by running '{exeName} start'."));
+    }
+
+    [Test]
+    public async Task ShowApiCatalog_WithSuccessfulFetch_PrintsGroupedEndpoints()
+    {
+        // Arrange
+        using var outputWriter = new StringWriter();
+        var handler = new FakeHttpMessageHandler();
+        using var client = new HttpClient(handler);
+
+        string mockSwagger = @"{
+  ""openapi"": ""3.0.1"",
+  ""paths"": {
+    ""/charts/list"": {
+      ""post"": {
+        ""tags"": [""Charts""],
+        ""summary"": ""List all charts in a sheet"",
+        ""requestBody"": {
+          ""content"": {
+            ""application/json"": {
+              ""schema"": {
+                ""$ref"": ""#/components/schemas/WorksheetRequest""
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  ""components"": {
+    ""schemas"": {
+      ""WorksheetRequest"": {
+        ""type"": ""object"",
+        ""properties"": {
+          ""workbook"": {
+            ""type"": ""string"",
+            ""description"": ""The target workbook""
+          },
+          ""sheet"": {
+            ""type"": ""string"",
+            ""description"": ""The target sheet""
+          }
+        },
+        ""required"": [ ""workbook"" ]
+      }
+    }
+  }
+}";
+
+        handler.HandlerFunc = (req) =>
+        {
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(mockSwagger)
+            });
+        };
+
+        // Act
+        await CliCommandHandler.ShowApiCatalog("127.0.0.1", client, outputWriter, 8080);
+
+        // Assert
+        string output = outputWriter.ToString();
+        Assert.That(output, Does.Contain("=== Charts ==="));
+        Assert.That(output, Does.Contain("[POST] /charts/list - List all charts in a sheet"));
+        Assert.That(output, Does.Contain("  Body:"));
+        Assert.That(output, Does.Contain("  {"));
+        Assert.That(output, Does.Contain("\"workbook\": \"string\", // (required) The target workbook"));
+        Assert.That(output, Does.Contain("\"sheet\": \"string\"     // (optional) The target sheet"));
+        Assert.That(output, Does.Contain("  }"));
+    }
 }

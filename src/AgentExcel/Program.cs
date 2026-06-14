@@ -59,6 +59,11 @@ class Program
                 await CliCommandHandler.ExecuteApiRequest(command, args, ListenHost);
                 return;
             }
+            else if (command == "api")
+            {
+                await CliCommandHandler.ShowApiCatalog(ListenHost);
+                return;
+            }
             else if (command == "--run-server")
             {
                 int port = int.Parse(args[1]);
@@ -74,6 +79,7 @@ class Program
         Console.WriteLine($"  {exeName} stop                      (Stop daemon)");
         Console.WriteLine($"  {exeName} status                    (Show status)");
         Console.WriteLine($"  {exeName} swagger                   (Open Swagger API testing page)");
+        Console.WriteLine($"  {exeName} api                       (Show API catalog / OpenAPI info)");
         Console.WriteLine($"  {exeName} version                   (Show version)");
         Console.WriteLine($"  {exeName} get <endpoint> [--stdin] [body_param]");
         Console.WriteLine($"  {exeName} post <endpoint> [--stdin] [body_param]");
@@ -90,6 +96,7 @@ class Program
         builder.Services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "AgentExcel API", Version = "v1" });
+            c.SchemaFilter<RequiredSchemaFilter>();
             var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
             if (File.Exists(xmlPath))
