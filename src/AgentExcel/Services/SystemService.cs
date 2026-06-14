@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 using AgentExcel.Models;
 using AgentExcel.Providers;
 
@@ -47,15 +45,15 @@ public class SystemService : ExcelServiceBase
                     foreach (dynamic q in queries)
                     {
                         result.Add(new QueryInfo(q.Name, q.Formula, q.Description));
-                        Marshal.ReleaseComObject(q);
+                        SafeReleaseComObject(q);
                     }
                 }
                 return result;
             }
             finally
             {
-                if (queries != null) Marshal.ReleaseComObject(queries);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(queries);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -84,7 +82,7 @@ public class SystemService : ExcelServiceBase
                         exists = true;
                         break;
                     }
-                    Marshal.ReleaseComObject(q);
+                    SafeReleaseComObject(q);
                 }
 
                 if (exists && query != null)
@@ -99,9 +97,9 @@ public class SystemService : ExcelServiceBase
             }
             finally
             {
-                if (query != null) Marshal.ReleaseComObject(query);
-                if (queries != null) Marshal.ReleaseComObject(queries);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(query);
+                SafeReleaseComObject(queries);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -125,16 +123,16 @@ public class SystemService : ExcelServiceBase
                     if (qName.Equals(name, StringComparison.OrdinalIgnoreCase))
                     {
                         q.Delete();
-                        Marshal.ReleaseComObject(q);
+                        SafeReleaseComObject(q);
                         break;
                     }
-                    Marshal.ReleaseComObject(q);
+                    SafeReleaseComObject(q);
                 }
             }
             finally
             {
-                if (queries != null) Marshal.ReleaseComObject(queries);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(queries);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -151,7 +149,7 @@ public class SystemService : ExcelServiceBase
             }
             finally
             {
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -170,8 +168,8 @@ public class SystemService : ExcelServiceBase
             }
             finally
             {
-                if (model != null) Marshal.ReleaseComObject(model);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(model);
+                SafeReleaseComObject(wb);
             }
         });
     }

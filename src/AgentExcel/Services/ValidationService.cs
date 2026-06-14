@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 
 using AgentExcel.Providers;
 
@@ -34,10 +33,10 @@ public class ValidationService : ExcelServiceBase
             }
             finally
             {
-                if (validation != null) Marshal.ReleaseComObject(validation);
-                if (range != null) Marshal.ReleaseComObject(range);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(validation);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }

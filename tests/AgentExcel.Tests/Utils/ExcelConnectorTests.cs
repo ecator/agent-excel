@@ -22,7 +22,8 @@ public class ExcelConnectorTests : BaseTests
         if (app != null)
         {
             Assert.That(Marshal.IsComObject(app), Is.True);
-            Marshal.ReleaseComObject(app);
+            ExcelConnector.SafeReleaseComObject(app);
+            ExcelConnector.ForceGarbageCollection();
         }
         else
         {
@@ -46,10 +47,8 @@ public class ExcelConnectorTests : BaseTests
         }
         finally
         {
-            if (app != null)
-            {
-                Marshal.ReleaseComObject(app);
-            }
+            ExcelConnector.SafeReleaseComObject(app);
+            ExcelConnector.ForceGarbageCollection();
         }
     }
 }

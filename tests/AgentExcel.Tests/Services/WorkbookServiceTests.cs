@@ -1,5 +1,6 @@
 using System.IO;
-using System.Runtime.InteropServices;
+
+using AgentExcel.Utils;
 
 using AgentExcel.Models;
 using AgentExcel.Providers;
@@ -43,7 +44,7 @@ public class WorkbookServiceTests : BaseTests
                     foreach (Excel.Workbook wb in wbs)
                     {
                         wb.Close(false);
-                        Marshal.ReleaseComObject(wb);
+                        ExcelConnector.SafeReleaseComObject(wb);
                     }
                 }
                 catch
@@ -52,11 +53,10 @@ public class WorkbookServiceTests : BaseTests
                 }
                 finally
                 {
-                    if (wbs != null)
-                    {
-                        Marshal.ReleaseComObject(wbs);
-                    }
+                    ExcelConnector.SafeReleaseComObject(wbs);
                 }
+
+                ExcelConnector.SafeReleaseComObject(app);
             }
             s_provider = null;
 
@@ -86,7 +86,7 @@ public class WorkbookServiceTests : BaseTests
                     foreach (Excel.Workbook wb in wbs)
                     {
                         wb.Close(false);
-                        Marshal.ReleaseComObject(wb);
+                        ExcelConnector.SafeReleaseComObject(wb);
                     }
                 }
                 catch
@@ -95,10 +95,7 @@ public class WorkbookServiceTests : BaseTests
                 }
                 finally
                 {
-                    if (wbs != null)
-                    {
-                        Marshal.ReleaseComObject(wbs);
-                    }
+                    ExcelConnector.SafeReleaseComObject(wbs);
                 }
             }
         }
@@ -127,11 +124,11 @@ public class WorkbookServiceTests : BaseTests
         string sheet2Name = defaultSheet.Name;
 
         // Release the temporary COM references we created locally in Act/Arrange
-        Marshal.ReleaseComObject(defaultSheet);
-        Marshal.ReleaseComObject(newSheet);
-        Marshal.ReleaseComObject(sheets);
-        Marshal.ReleaseComObject(wb);
-        Marshal.ReleaseComObject(wbs);
+        ExcelConnector.SafeReleaseComObject(defaultSheet);
+        ExcelConnector.SafeReleaseComObject(newSheet);
+        ExcelConnector.SafeReleaseComObject(sheets);
+        ExcelConnector.SafeReleaseComObject(wb);
+        ExcelConnector.SafeReleaseComObject(wbs);
 
         // Act
         WorkbookInfo info = _service!.GetWorkbookInfo(wbName);
@@ -226,8 +223,8 @@ public class WorkbookServiceTests : BaseTests
         string wbName = wb.Name;
 
         // Release references immediately to avoid locking issues when doing operations via service
-        Marshal.ReleaseComObject(wb);
-        Marshal.ReleaseComObject(wbs);
+        ExcelConnector.SafeReleaseComObject(wb);
+        ExcelConnector.SafeReleaseComObject(wbs);
 
         string tempFileName = $"test_save_{Guid.NewGuid()}{extension}";
         string tempFilePath = Path.Combine(TestDataTempPath, tempFileName);
@@ -264,12 +261,9 @@ public class WorkbookServiceTests : BaseTests
                 if (checkWb != null)
                 {
                     checkWb.Close(false);
-                    Marshal.ReleaseComObject(checkWb);
+                    ExcelConnector.SafeReleaseComObject(checkWb);
                 }
-                if (checkWbs != null)
-                {
-                    Marshal.ReleaseComObject(checkWbs);
-                }
+                ExcelConnector.SafeReleaseComObject(checkWbs);
             }
         }
         finally
@@ -310,8 +304,8 @@ public class WorkbookServiceTests : BaseTests
         Excel.Workbook wb = wbs.Add(Type.Missing);
         string wbName = wb.Name;
 
-        Marshal.ReleaseComObject(wb);
-        Marshal.ReleaseComObject(wbs);
+        ExcelConnector.SafeReleaseComObject(wb);
+        ExcelConnector.SafeReleaseComObject(wbs);
 
         // Act
         var list = _service!.ListWorkbooks();

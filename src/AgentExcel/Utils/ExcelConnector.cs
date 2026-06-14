@@ -178,9 +178,9 @@ internal static class ExcelConnector
     }
 
     /// <summary>
-    /// Safely releases a COM object and sets its reference to null.
+    /// Safely releases a COM object if it is not null and is a valid COM object.
     /// </summary>
-    public static void SafeReleaseComObject(ref object? obj)
+    public static void SafeReleaseComObject(object? obj)
     {
         if (obj != null && Marshal.IsComObject(obj))
         {
@@ -190,11 +190,7 @@ internal static class ExcelConnector
             }
             catch
             {
-                // Log or ignore
-            }
-            finally
-            {
-                obj = null;
+                // Ignore release errors
             }
         }
     }

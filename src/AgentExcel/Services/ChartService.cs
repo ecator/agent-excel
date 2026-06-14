@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 
 using AgentExcel.Providers;
 
@@ -28,15 +27,15 @@ public class ChartService : ExcelServiceBase
                 foreach (Excel.ChartObject co in charts)
                 {
                     result.Add(co.Name);
-                    Marshal.ReleaseComObject(co);
+                    SafeReleaseComObject(co);
                 }
                 return result;
             }
             finally
             {
-                if (charts != null) Marshal.ReleaseComObject(charts);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(charts);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -78,12 +77,12 @@ public class ChartService : ExcelServiceBase
             }
             finally
             {
-                if (chart != null) Marshal.ReleaseComObject(chart);
-                if (co != null) Marshal.ReleaseComObject(co);
-                if (charts != null) Marshal.ReleaseComObject(charts);
-                if (source != null) Marshal.ReleaseComObject(source);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(chart);
+                SafeReleaseComObject(co);
+                SafeReleaseComObject(charts);
+                SafeReleaseComObject(source);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -132,12 +131,12 @@ public class ChartService : ExcelServiceBase
             }
             finally
             {
-                if (source != null) Marshal.ReleaseComObject(source);
-                if (chart != null) Marshal.ReleaseComObject(chart);
-                if (co != null) Marshal.ReleaseComObject(co);
-                if (charts != null) Marshal.ReleaseComObject(charts);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(source);
+                SafeReleaseComObject(chart);
+                SafeReleaseComObject(co);
+                SafeReleaseComObject(charts);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -160,10 +159,10 @@ public class ChartService : ExcelServiceBase
             }
             finally
             {
-                if (co != null) Marshal.ReleaseComObject(co);
-                if (charts != null) Marshal.ReleaseComObject(charts);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(co);
+                SafeReleaseComObject(charts);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }

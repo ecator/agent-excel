@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 
 using AgentExcel.Models;
 using AgentExcel.Providers;
@@ -30,25 +29,19 @@ public class WorkbookService : ExcelServiceBase
                     if (s is Excel.Worksheet ws)
                     {
                         sheetNames.Add(ws.Name);
-                        Marshal.ReleaseComObject(ws);
+                        SafeReleaseComObject(ws);
                     }
-                    else if (s != null)
+                    else
                     {
-                        Marshal.ReleaseComObject(s);
+                        SafeReleaseComObject(s);
                     }
                 }
                 return new WorkbookInfo(wb.Name, wb.FullName, sheetNames);
             }
             finally
             {
-                if (shs != null)
-                {
-                    Marshal.ReleaseComObject(shs);
-                }
-                if (wb != null)
-                {
-                    Marshal.ReleaseComObject(wb);
-                }
+                SafeReleaseComObject(shs);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -69,16 +62,13 @@ public class WorkbookService : ExcelServiceBase
                 foreach (Excel.Workbook wb in wbs)
                 {
                     workbooks.Add(GetWorkbookInfo(wb.Name));
-                    Marshal.ReleaseComObject(wb);
+                    SafeReleaseComObject(wb);
                 }
                 return workbooks;
             }
             finally
             {
-                if (wbs != null)
-                {
-                    Marshal.ReleaseComObject(wbs);
-                }
+                SafeReleaseComObject(wbs);
             }
         });
     }
@@ -103,14 +93,8 @@ public class WorkbookService : ExcelServiceBase
             }
             finally
             {
-                if (wb != null)
-                {
-                    Marshal.ReleaseComObject(wb);
-                }
-                if (wbs != null)
-                {
-                    Marshal.ReleaseComObject(wbs);
-                }
+                SafeReleaseComObject(wb);
+                SafeReleaseComObject(wbs);
             }
         });
     }
@@ -134,14 +118,8 @@ public class WorkbookService : ExcelServiceBase
             }
             finally
             {
-                if (wb != null)
-                {
-                    Marshal.ReleaseComObject(wb);
-                }
-                if (wbs != null)
-                {
-                    Marshal.ReleaseComObject(wbs);
-                }
+                SafeReleaseComObject(wb);
+                SafeReleaseComObject(wbs);
             }
         });
     }
@@ -158,10 +136,7 @@ public class WorkbookService : ExcelServiceBase
             }
             finally
             {
-                if (wb != null)
-                {
-                    Marshal.ReleaseComObject(wb);
-                }
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -187,10 +162,7 @@ public class WorkbookService : ExcelServiceBase
             }
             finally
             {
-                if (wb != null)
-                {
-                    Marshal.ReleaseComObject(wb);
-                }
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -243,10 +215,7 @@ public class WorkbookService : ExcelServiceBase
             }
             finally
             {
-                if (wb != null)
-                {
-                    Marshal.ReleaseComObject(wb);
-                }
+                SafeReleaseComObject(wb);
             }
         });
     }

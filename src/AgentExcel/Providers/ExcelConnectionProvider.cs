@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
 
+using AgentExcel.Utils;
+
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace AgentExcel.Providers;
@@ -73,7 +75,7 @@ public class ExcelConnectionProvider : IExcelConnectionProvider
             }
 
             // Attempt to connect or launch Excel using the utility helper
-            _app = AgentExcel.Utils.ExcelConnector.EnsureExcelApplication(createNew);
+            _app = ExcelConnector.EnsureExcelApplication(createNew);
 
             if (_app == null && createNew)
             {
@@ -113,12 +115,18 @@ public class ExcelConnectionProvider : IExcelConnectionProvider
                 }
             }
             // Explicitly release COM objects in reverse order of creation
-            Marshal.ReleaseComObject(wbs);
-            Marshal.ReleaseComObject(app);
+            SafeReleaseComObject(wbs);
+            SafeReleaseComObject(app);
             _app = null;
         }
 
         _disposed = true;
         GC.SuppressFinalize(this);
+    }
+
+    /// <inheritdoc />
+    public void SafeReleaseComObject(object? obj)
+    {
+        ExcelConnector.SafeReleaseComObject(obj);
     }
 }

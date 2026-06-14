@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 using AgentExcel.Providers;
 
 using Excel = Microsoft.Office.Interop.Excel;
@@ -39,15 +37,15 @@ public class PivotTableService : ExcelServiceBase
             }
             finally
             {
-                if (ptable != null) Marshal.ReleaseComObject(ptable);
-                if (ptables != null) Marshal.ReleaseComObject(ptables);
-                if (pcache != null) Marshal.ReleaseComObject(pcache);
-                if (pcaches != null) Marshal.ReleaseComObject(pcaches);
-                if (tgtRange != null) Marshal.ReleaseComObject(tgtRange);
-                if (srcRange != null) Marshal.ReleaseComObject(srcRange);
-                if (wsTarget != null) Marshal.ReleaseComObject(wsTarget);
-                if (wsSource != null) Marshal.ReleaseComObject(wsSource);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(ptable);
+                SafeReleaseComObject(ptables);
+                SafeReleaseComObject(pcache);
+                SafeReleaseComObject(pcaches);
+                SafeReleaseComObject(tgtRange);
+                SafeReleaseComObject(srcRange);
+                SafeReleaseComObject(wsTarget);
+                SafeReleaseComObject(wsSource);
+                SafeReleaseComObject(wb);
             }
         });
     }

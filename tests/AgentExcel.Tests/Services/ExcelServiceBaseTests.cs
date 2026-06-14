@@ -47,6 +47,7 @@ public class ExcelServiceBaseTests : BaseTests
     private class FakeExcelConnectionProvider : IExcelConnectionProvider
     {
         public Excel.Application? GetApp(bool createNew = false) => null;
+        public void SafeReleaseComObject(object? obj) { }
         public void Dispose() { }
     }
 

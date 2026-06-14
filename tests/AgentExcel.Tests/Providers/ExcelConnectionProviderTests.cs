@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 using AgentExcel.Providers;
+using AgentExcel.Utils;
 
 using NUnit.Framework;
 
@@ -26,7 +27,14 @@ public class ExcelConnectionProviderTests : BaseTests
     [OneTimeTearDown]
     public void OneTimeTeardown()
     {
-        s_provider = null;
+        if (s_provider != null)
+        {
+            var app = s_provider.GetApp(createNew: false);
+            ExcelConnector.SafeReleaseComObject(app);
+            s_provider = null;
+
+            ExcelConnector.ForceGarbageCollection();
+        }
     }
 
     [Test]

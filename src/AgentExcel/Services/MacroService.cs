@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 
 using AgentExcel.Providers;
 
@@ -33,7 +32,7 @@ public class MacroService : ExcelServiceBase
                 }
                 finally
                 {
-                    Marshal.ReleaseComObject(wb);
+                    SafeReleaseComObject(wb);
                 }
             }
 

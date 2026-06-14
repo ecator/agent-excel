@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 using AgentExcel.Models;
 using AgentExcel.Providers;
 
@@ -35,8 +33,8 @@ public class ShapeService : ExcelServiceBase
                         var tf = shape.TextFrame;
                         var chars = tf.Characters();
                         text = chars.Text;
-                        Marshal.ReleaseComObject(chars);
-                        Marshal.ReleaseComObject(tf);
+                        SafeReleaseComObject(chars);
+                        SafeReleaseComObject(tf);
                     }
                     catch
                     {
@@ -52,15 +50,15 @@ public class ShapeService : ExcelServiceBase
                         (float)shape.Height,
                         text
                     ));
-                    Marshal.ReleaseComObject(shape);
+                    SafeReleaseComObject(shape);
                 }
                 return result;
             }
             finally
             {
-                if (shapes != null) Marshal.ReleaseComObject(shapes);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(shapes);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -100,18 +98,18 @@ public class ShapeService : ExcelServiceBase
                     var tf = shape.TextFrame;
                     var chars = tf.Characters();
                     chars.Text = text;
-                    Marshal.ReleaseComObject(chars);
-                    Marshal.ReleaseComObject(tf);
+                    SafeReleaseComObject(chars);
+                    SafeReleaseComObject(tf);
                 }
 
                 return shape.Name;
             }
             finally
             {
-                if (shape != null) Marshal.ReleaseComObject(shape);
-                if (shapes != null) Marshal.ReleaseComObject(shapes);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(shape);
+                SafeReleaseComObject(shapes);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -141,16 +139,16 @@ public class ShapeService : ExcelServiceBase
                     var tf = shape.TextFrame;
                     var chars = tf.Characters();
                     chars.Text = text;
-                    Marshal.ReleaseComObject(chars);
-                    Marshal.ReleaseComObject(tf);
+                    SafeReleaseComObject(chars);
+                    SafeReleaseComObject(tf);
                 }
             }
             finally
             {
-                if (shape != null) Marshal.ReleaseComObject(shape);
-                if (shapes != null) Marshal.ReleaseComObject(shapes);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(shape);
+                SafeReleaseComObject(shapes);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -173,10 +171,10 @@ public class ShapeService : ExcelServiceBase
             }
             finally
             {
-                if (shape != null) Marshal.ReleaseComObject(shape);
-                if (shapes != null) Marshal.ReleaseComObject(shapes);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(shape);
+                SafeReleaseComObject(shapes);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }

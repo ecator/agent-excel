@@ -17,6 +17,12 @@ public abstract class ExcelServiceBase
 
     protected Excel.Application? GetApp(bool createNew = false) => ConnectionProvider.GetApp(createNew);
 
+    /// <summary>
+    /// Safely releases a COM object if it is not null and is a valid COM object.
+    /// Delegates to the underlying connection provider.
+    /// </summary>
+    protected void SafeReleaseComObject(object? obj) => ConnectionProvider.SafeReleaseComObject(obj);
+
     public string GetActiveWorkbookName()
     {
         var app = GetApp(createNew: false);
@@ -37,10 +43,7 @@ public abstract class ExcelServiceBase
         }
         finally
         {
-            if (wb != null)
-            {
-                Marshal.ReleaseComObject(wb);
-            }
+            SafeReleaseComObject(wb);
         }
     }
 
@@ -92,16 +95,13 @@ public abstract class ExcelServiceBase
                 {
                     return wb;
                 }
-                Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(wb);
             }
             throw new Exception($"Workbook '{workbookName}' not found.");
         }
         finally
         {
-            if (wbs != null)
-            {
-                Marshal.ReleaseComObject(wbs);
-            }
+            SafeReleaseComObject(wbs);
         }
     }
 
@@ -122,19 +122,13 @@ public abstract class ExcelServiceBase
                 {
                     return ws;
                 }
-                if (s != null)
-                {
-                    Marshal.ReleaseComObject(s);
-                }
+                SafeReleaseComObject(s);
             }
             throw new Exception($"Worksheet '{sheetName}' not found in workbook '{workbook.Name}'.");
         }
         finally
         {
-            if (sheets != null)
-            {
-                Marshal.ReleaseComObject(sheets);
-            }
+            SafeReleaseComObject(sheets);
         }
     }
 }

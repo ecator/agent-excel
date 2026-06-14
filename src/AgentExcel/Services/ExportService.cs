@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 
 using AgentExcel.Providers;
 
@@ -37,16 +36,16 @@ public class ExportService : ExcelServiceBase
                 finally
                 {
                     co.Delete();
-                    Marshal.ReleaseComObject(chart);
-                    Marshal.ReleaseComObject(co);
-                    Marshal.ReleaseComObject(charts);
+                    SafeReleaseComObject(chart);
+                    SafeReleaseComObject(co);
+                    SafeReleaseComObject(charts);
                 }
             }
             finally
             {
-                if (range != null) Marshal.ReleaseComObject(range);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -63,7 +62,7 @@ public class ExportService : ExcelServiceBase
             }
             finally
             {
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(wb);
             }
         });
     }

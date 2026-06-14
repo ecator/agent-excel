@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 using AgentExcel.Models;
 using AgentExcel.Providers;
@@ -42,9 +41,9 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                if (range != null) Marshal.ReleaseComObject(range);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -65,9 +64,9 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                if (range != null) Marshal.ReleaseComObject(range);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -88,9 +87,9 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                if (range != null) Marshal.ReleaseComObject(range);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -118,9 +117,9 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                if (range != null) Marshal.ReleaseComObject(range);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -141,9 +140,9 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                if (range != null) Marshal.ReleaseComObject(range);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -170,7 +169,7 @@ public class DataService : ExcelServiceBase
                         table = t;
                         break;
                     }
-                    Marshal.ReleaseComObject(t);
+                    SafeReleaseComObject(t);
                 }
 
                 if (table == null)
@@ -192,11 +191,11 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                if (range != null) Marshal.ReleaseComObject(range);
-                if (table != null) Marshal.ReleaseComObject(table);
-                if (tables != null) Marshal.ReleaseComObject(tables);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(table);
+                SafeReleaseComObject(tables);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -229,11 +228,11 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                if (table != null) Marshal.ReleaseComObject(table);
-                if (tables != null) Marshal.ReleaseComObject(tables);
-                if (range != null) Marshal.ReleaseComObject(range);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(table);
+                SafeReleaseComObject(tables);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -259,7 +258,7 @@ public class DataService : ExcelServiceBase
                         table = t;
                         break;
                     }
-                    Marshal.ReleaseComObject(t);
+                    SafeReleaseComObject(t);
                 }
 
                 if (table == null)
@@ -271,10 +270,10 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                if (table != null) Marshal.ReleaseComObject(table);
-                if (tables != null) Marshal.ReleaseComObject(tables);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(table);
+                SafeReleaseComObject(tables);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -315,13 +314,13 @@ public class DataService : ExcelServiceBase
 
                         if (nextMatch != null && nextMatch.get_Address() == firstAddress)
                         {
-                            Marshal.ReleaseComObject(nextMatch);
+                            SafeReleaseComObject(nextMatch);
                             break;
                         }
 
                         if (currentMatch != firstMatch)
                         {
-                            Marshal.ReleaseComObject(currentMatch);
+                            SafeReleaseComObject(currentMatch);
                         }
                         currentMatch = nextMatch;
                     }
@@ -330,11 +329,11 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                if (currentMatch != null && currentMatch != firstMatch) Marshal.ReleaseComObject(currentMatch);
-                if (firstMatch != null) Marshal.ReleaseComObject(firstMatch);
-                if (searchRange != null) Marshal.ReleaseComObject(searchRange);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                if (currentMatch != null && currentMatch != firstMatch) SafeReleaseComObject(currentMatch);
+                SafeReleaseComObject(firstMatch);
+                SafeReleaseComObject(searchRange);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -359,9 +358,9 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                if (searchRange != null) Marshal.ReleaseComObject(searchRange);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(searchRange);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -413,7 +412,7 @@ public class DataService : ExcelServiceBase
 
                     if (wb == null)
                     {
-                        Marshal.ReleaseComObject(openWb);
+                        SafeReleaseComObject(openWb);
                     }
                 }
 
@@ -446,7 +445,7 @@ public class DataService : ExcelServiceBase
                                         {
                                             Excel.Range? cell = ws.Cells[r, c] as Excel.Range;
                                             results.Add(new GrepResult(Path.GetFileName(file), ws.Name, "Cell", cell?.get_Address() ?? $"R{r}C{c}", cellText));
-                                            if (cell != null) Marshal.ReleaseComObject(cell);
+                                            SafeReleaseComObject(cell);
                                         }
                                     }
                                 }
@@ -454,7 +453,7 @@ public class DataService : ExcelServiceBase
                         }
                         finally
                         {
-                            if (usedRange != null) Marshal.ReleaseComObject(usedRange);
+                            SafeReleaseComObject(usedRange);
                         }
 
                         // 2. Search in Shapes (Textboxes, etc.)
@@ -473,8 +472,8 @@ public class DataService : ExcelServiceBase
                                     {
                                         results.Add(new GrepResult(Path.GetFileName(file), ws.Name, "Shape", shape.Name, shapeText));
                                     }
-                                    Marshal.ReleaseComObject(characters);
-                                    Marshal.ReleaseComObject(textFrame);
+                                    SafeReleaseComObject(characters);
+                                    SafeReleaseComObject(textFrame);
                                 }
                                 catch
                                 {
@@ -482,20 +481,20 @@ public class DataService : ExcelServiceBase
                                 }
                                 finally
                                 {
-                                    Marshal.ReleaseComObject(shape);
+                                    SafeReleaseComObject(shape);
                                 }
                             }
                         }
                         finally
                         {
-                            if (shapes != null) Marshal.ReleaseComObject(shapes);
+                            SafeReleaseComObject(shapes);
                         }
 
-                        Marshal.ReleaseComObject(ws);
+                        SafeReleaseComObject(ws);
                     }
                     else if (s != null)
                     {
-                        Marshal.ReleaseComObject(s);
+                        SafeReleaseComObject(s);
                     }
                 }
             }
@@ -511,9 +510,9 @@ public class DataService : ExcelServiceBase
                     {
                         wb.Close(SaveChanges: false);
                     }
-                    Marshal.ReleaseComObject(wb);
+                    SafeReleaseComObject(wb);
                 }
-                if (wbs != null) Marshal.ReleaseComObject(wbs);
+                SafeReleaseComObject(wbs);
             }
         }
 
@@ -575,11 +574,11 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                if (interior != null) Marshal.ReleaseComObject(interior);
-                if (font != null) Marshal.ReleaseComObject(font);
-                if (range != null) Marshal.ReleaseComObject(range);
-                if (ws != null) Marshal.ReleaseComObject(ws);
-                if (wb != null) Marshal.ReleaseComObject(wb);
+                SafeReleaseComObject(interior);
+                SafeReleaseComObject(font);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }

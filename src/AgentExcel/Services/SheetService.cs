@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 using AgentExcel.Providers;
 
 using Excel = Microsoft.Office.Interop.Excel;
@@ -28,25 +26,19 @@ public class SheetService : ExcelServiceBase
                     if (s is Excel.Worksheet ws)
                     {
                         names.Add(ws.Name);
-                        Marshal.ReleaseComObject(ws);
+                        SafeReleaseComObject(ws);
                     }
                     else if (s != null)
                     {
-                        Marshal.ReleaseComObject(s);
+                        SafeReleaseComObject(s);
                     }
                 }
                 return names;
             }
             finally
             {
-                if (sheets != null)
-                {
-                    Marshal.ReleaseComObject(sheets);
-                }
-                if (wb != null)
-                {
-                    Marshal.ReleaseComObject(wb);
-                }
+                SafeReleaseComObject(sheets);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -70,18 +62,9 @@ public class SheetService : ExcelServiceBase
             }
             finally
             {
-                if (ws != null)
-                {
-                    Marshal.ReleaseComObject(ws);
-                }
-                if (sheets != null)
-                {
-                    Marshal.ReleaseComObject(sheets);
-                }
-                if (wb != null)
-                {
-                    Marshal.ReleaseComObject(wb);
-                }
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(sheets);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -109,14 +92,8 @@ public class SheetService : ExcelServiceBase
             }
             finally
             {
-                if (ws != null)
-                {
-                    Marshal.ReleaseComObject(ws);
-                }
-                if (wb != null)
-                {
-                    Marshal.ReleaseComObject(wb);
-                }
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
@@ -135,14 +112,8 @@ public class SheetService : ExcelServiceBase
             }
             finally
             {
-                if (ws != null)
-                {
-                    Marshal.ReleaseComObject(ws);
-                }
-                if (wb != null)
-                {
-                    Marshal.ReleaseComObject(wb);
-                }
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
