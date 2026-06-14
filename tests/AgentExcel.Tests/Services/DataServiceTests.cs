@@ -661,5 +661,77 @@ public class DataServiceTests : BaseTests
 
         Assert.That(ex!.Message, Contains.Substring("does not match the size of the data to be written"));
     }
+
+    [Test]
+    [Category("COM")]
+    public void Clear_WhenRangeIsEmpty_ClearsUsedRange()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Val1");
+        _service.WriteRange(_wbName, "Sheet1", "B2", "Val2");
+
+        // Act
+        var address = _service.Clear(_wbName, "Sheet1", null, "all");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$A$1:$B$2"));
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1:B2");
+        Assert.That(results, Is.Empty);
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Clear_WithFormats_OnlyClearsFormatting()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Val1");
+        _service.SetStyle(_wbName, "Sheet1", "A1", new CellStyle { Bold = true });
+
+        // Act
+        _service.Clear(_wbName, "Sheet1", "A1", "formats");
+
+        // Assert
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1");
+        Assert.That(results["A1"]?.ToString(), Is.EqualTo("Val1"));
+
+        var style = _service.GetStyle(_wbName, "Sheet1", "A1");
+        Assert.That(style.Bold, Is.False);
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Clear_WithContents_OnlyClearsContents()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Val1");
+        _service.SetStyle(_wbName, "Sheet1", "A1", new CellStyle { Bold = true });
+
+        // Act
+        _service.Clear(_wbName, "Sheet1", "A1", "contents");
+
+        // Assert
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1");
+        Assert.That(results, Is.Empty);
+
+        var style = _service.GetStyle(_wbName, "Sheet1", "A1");
+        Assert.That(style.Bold, Is.True);
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Clear_WithInvalidType_ThrowsArgumentException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.Clear(_wbName, "Sheet1", "A1", "invalid_type");
+        });
+    }
 }
 

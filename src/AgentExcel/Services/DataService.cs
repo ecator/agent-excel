@@ -814,6 +814,67 @@ public class DataService : ExcelServiceBase
         });
     }
 
+    public string Clear(string workbookName, string sheetName, string? rangeAddress, string? clearType)
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? excelRange = null;
+            try
+            {
+                wb = GetWorkbook(workbookName, createNew: true);
+                ws = GetWorksheet(wb, sheetName);
+
+                if (string.IsNullOrWhiteSpace(rangeAddress))
+                {
+                    excelRange = ws.UsedRange;
+                }
+                else
+                {
+                    excelRange = GetRange(ws, rangeAddress);
+                }
+
+                if (excelRange == null)
+                {
+                    throw new InvalidOperationException("Target range could not be determined.");
+                }
+
+                string address = excelRange.get_Address();
+                string type = (clearType ?? "all").Trim().ToLowerInvariant();
+
+                switch (type)
+                {
+                    case "all":
+                        excelRange.Clear();
+                        break;
+                    case "formats":
+                        excelRange.ClearFormats();
+                        break;
+                    case "contents":
+                        excelRange.ClearContents();
+                        break;
+                    case "comments":
+                        excelRange.ClearComments();
+                        break;
+                    case "hyperlinks":
+                        excelRange.ClearHyperlinks();
+                        break;
+                    default:
+                        throw new ArgumentException($"Invalid clear type '{clearType}'. Supported types are: all, formats, contents, comments, hyperlinks.");
+                }
+
+                return address;
+            }
+            finally
+            {
+                SafeReleaseComObject(excelRange);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
     public void SetStyle(string workbookName, string sheetName, string range, CellStyle style)
     {
         ExecuteWithRetry(() =>

@@ -121,6 +121,14 @@ public static class DataEndpoints
         .WithTags("Data")
         .WithSummary("Set cell styles (Font, Color, Bold, Alignment, etc.)");
 
+        data.MapPost("/clear", (ClearRequest req, DataService dataService) =>
+        {
+            var address = dataService.Clear(req.Workbook, req.Sheet, req.Range, req.Type);
+            return Results.Text($"range[{address}] has been cleared");
+        })
+        .WithTags("Data")
+        .WithSummary("Clear range (All, Formats, Contents, Comments, Hyperlinks)");
+
     }
 
     private static string FormatFindResults(List<FindResult> results, string action)
