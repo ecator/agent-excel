@@ -129,6 +129,22 @@ public static class DataEndpoints
         .WithTags("Data")
         .WithSummary("Clear range (All, Formats, Contents, Comments, Hyperlinks)");
 
+        data.MapPost("/get-selection", (WorksheetRequest req, DataService dataService) =>
+        {
+            var address = dataService.GetSelection(req.Workbook, req.Sheet);
+            return Results.Text(address);
+        })
+        .WithTags("Data")
+        .WithSummary("Get selection address of a specific sheet");
+
+        data.MapPost("/set-selection", (SetSelectionRequest req, DataService dataService) =>
+        {
+            var address = dataService.SetSelection(req.Workbook, req.Sheet, req.Range);
+            return Results.Text($"selection of sheet[{req.Sheet}] has been set to range[{address}]");
+        })
+        .WithTags("Data")
+        .WithSummary("Set selection of a specific sheet and activate the range");
+
     }
 
     private static string FormatFindResults(List<FindResult> results, string action)

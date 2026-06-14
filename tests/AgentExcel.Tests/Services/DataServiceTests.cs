@@ -733,5 +733,48 @@ public class DataServiceTests : BaseTests
             _service!.Clear(_wbName, "Sheet1", "A1", "invalid_type");
         });
     }
+
+    [Test]
+    [Category("COM")]
+    public void SetSelection_WithValidRange_SetsSelectionAndReturnsAddress()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act
+        var address = _service!.SetSelection(_wbName, "Sheet1", "B2:C3");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$B$2:$C$3"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void SetSelection_SingleCell_SetsSelectionAndReturnsAddress()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act
+        var address = _service!.SetSelection(_wbName, "Sheet1", "B2");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$B$2"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void GetSelection_WhenRangeIsSelected_ReturnsCorrectAddress()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.SetSelection(_wbName, "Sheet1", "A1:B2");
+
+        // Act
+        var address = _service.GetSelection(_wbName, "Sheet1");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$A$1:$B$2"));
+    }
 }
 

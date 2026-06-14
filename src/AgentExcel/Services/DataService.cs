@@ -1111,6 +1111,82 @@ public class DataService : ExcelServiceBase
         });
     }
 
+    public string GetSelection(string workbookName, string sheetName)
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Application? app = null;
+            object? selectionObj = null;
+            Excel.Range? range = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                ws = GetWorksheet(wb, sheetName);
+                app = GetApp(createNew: false);
+                if (app == null)
+                {
+                    throw new Exception("Excel is not running. Please open Excel first.");
+                }
+
+                wb.Activate();
+                ws.Activate();
+
+                selectionObj = app.Selection;
+                if (selectionObj is Excel.Range r)
+                {
+                    range = r;
+                    return range.get_Address();
+                }
+                else
+                {
+                    throw new InvalidOperationException("The current selection is not a cell range.");
+                }
+            }
+            finally
+            {
+                SafeReleaseComObject(range);
+                if (selectionObj != null && selectionObj != range)
+                {
+                    SafeReleaseComObject(selectionObj);
+                }
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+    public string SetSelection(string workbookName, string sheetName, string rangeAddress)
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? excelRange = null;
+            try
+            {
+                wb = GetWorkbook(workbookName, createNew: true);
+                ws = GetWorksheet(wb, sheetName);
+                excelRange = GetRange(ws, rangeAddress);
+
+                wb.Activate();
+                ws.Activate();
+
+                excelRange.Select();
+                excelRange.Activate();
+
+                return excelRange.get_Address();
+            }
+            finally
+            {
+                SafeReleaseComObject(excelRange);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
     public void RenameTable(string workbookName, string sheetName, string tableName, string newTableName)
     {
         if (string.IsNullOrWhiteSpace(tableName))
