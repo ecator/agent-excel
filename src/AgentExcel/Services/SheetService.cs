@@ -436,7 +436,8 @@ public class SheetService : ExcelServiceBase
                 SafeReleaseComObject(sourceWb);
             }
         });
-    }    public WorksheetInfo GetWorksheetInfo(string workbookName, string sheetName)
+    }
+    public WorksheetInfo GetWorksheetInfo(string workbookName, string sheetName)
     {
         return ExecuteWithRetry(() =>
         {

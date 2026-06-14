@@ -15,6 +15,10 @@ public static class ColorHelper
         try
         {
             hex = hex.TrimStart('#');
+            if (hex.Length < 6)
+            {
+                hex = hex.PadRight(6, '0');
+            }
             if (hex.Length == 6)
             {
                 int r = int.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
