@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 
 using AgentExcel.Commands;
 using AgentExcel.Endpoints;
@@ -43,6 +44,16 @@ class Program
                 CliCommandHandler.OpenSwaggerPage(ListenHost);
                 return;
             }
+            else if (command == "version")
+            {
+                var version = Assembly.GetExecutingAssembly()
+                    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                    .InformationalVersion 
+                    ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString() 
+                    ?? "unknown";
+                Console.WriteLine(version);
+                return;
+            }
             else if (command == "--run-server")
             {
                 int port = int.Parse(args[1]);
@@ -58,6 +69,7 @@ class Program
         Console.WriteLine($"  {exeName} stop    (Stop daemon)");
         Console.WriteLine($"  {exeName} status  (Show status)");
         Console.WriteLine($"  {exeName} swagger (Open Swagger API testing page)");
+        Console.WriteLine($"  {exeName} version (Show version)");
     }
 
     static void RunServer(int port)
