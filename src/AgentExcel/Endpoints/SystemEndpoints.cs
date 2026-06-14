@@ -50,46 +50,5 @@ public static class SystemEndpoints
         })
         .WithTags("System")
         .WithSummary("Trigger a global calculation");
-
-        var pq = app.MapGroup("/queries").WithOpenApi();
-
-        pq.MapPost("/list", (WorkbookRequest req, SystemService systemService) =>
-            Results.Extensions.Yaml(systemService.ListQueries(req.Workbook)))
-            .WithTags("Queries")
-            .WithSummary("List all Power Queries in a workbook");
-
-        pq.MapPost("/add-update", (AddQueryRequest req, SystemService systemService) =>
-        {
-            systemService.AddOrUpdateQuery(req.Workbook, req.Name, req.Formula, req.Description);
-            return Results.Extensions.Yaml(new { status = "success" });
-        })
-        .WithTags("Queries")
-        .WithSummary("Add or update a Power Query (M Language)");
-
-        pq.MapPost("/delete", (DeleteQueryRequest req, SystemService systemService) =>
-        {
-            systemService.DeleteQuery(req.Workbook, req.Name);
-            return Results.Extensions.Yaml(new { status = "deleted" });
-        })
-        .WithTags("Queries")
-        .WithSummary("Delete a Power Query");
-
-        var conn = app.MapGroup("/connections").WithOpenApi();
-
-        conn.MapPost("/refresh-all", (WorkbookRequest req, SystemService systemService) =>
-        {
-            systemService.RefreshAllDataConnections(req.Workbook);
-            return Results.Extensions.Yaml(new { status = "refreshing" });
-        })
-        .WithTags("Connections")
-        .WithSummary("Refresh all data connections, Power Queries, and Data Model");
-
-        conn.MapPost("/refresh-model", (WorkbookRequest req, SystemService systemService) =>
-        {
-            systemService.RefreshModel(req.Workbook);
-            return Results.Extensions.Yaml(new { status = "refreshing_model" });
-        })
-        .WithTags("Connections")
-        .WithSummary("Refresh the Excel Data Model (Power Pivot)");
     }
 }

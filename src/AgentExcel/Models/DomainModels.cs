@@ -43,15 +43,6 @@ public record GrepResult(string File, string Sheet, string Type, string Location
 /// <param name="Height">Height of the shape in points.</param>
 /// <param name="Text">The text inside the shape, if any.</param>
 public record ShapeInfo(string Name, string Type, float Left, float Top, float Width, float Height, string? Text);
-
-/// <summary>
-/// Information about a Power Query formula.
-/// </summary>
-/// <param name="Name">The query name.</param>
-/// <param name="Formula">The M-formula of the query.</param>
-/// <param name="Description">Optional description of the query.</param>
-public record QueryInfo(string Name, string Formula, string Description);
-
 /// <summary>
 /// Represents a match from a find operation in a worksheet.
 /// </summary>
