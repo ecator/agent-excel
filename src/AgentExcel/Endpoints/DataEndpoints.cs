@@ -22,10 +22,24 @@ public static class DataEndpoints
         .WithTags("Data")
         .WithSummary("Read data from a range");
 
+
+        data.MapPost("/list-tables", (ListTablesRequest req, DataService dataService) =>
+        {
+            var results = dataService.ListTables(req.Workbook, req.Sheet).Select(i => new { Sheet = i.Key, Tables = i.Value });
+            return results.Count() > 0 ? Results.Extensions.Yaml(results) : Results.Extensions.Yaml(null);
+        })
+        .WithTags("Data")
+        .WithSummary("List all Excel Tables in the workbook or a specific sheet");
+
+
         data.MapPost("/read-table", (ReadTableRequest req, DataService dataService) =>
-            Results.Extensions.Yaml(new { values = dataService.ReadTable(req.Workbook, req.Sheet, req.Name) }))
-            .WithTags("Data")
-            .WithSummary("Read data from an Excel Table (ListObject)");
+        {
+            var content = dataService.ReadTableAsMarkdown(req.Workbook, req.Sheet, req.Name);
+            return Results.Text(content, "text/plain; charset=utf-8");
+        })
+        .WithTags("Data")
+        .WithSummary("Read data from an Excel Table (ListObject) in Markdown format");
+
 
         data.MapPost("/convert-to-table", (ConvertToTableRequest req, DataService dataService) =>
             Results.Extensions.Yaml(new { name = dataService.ConvertToTable(req.Workbook, req.Sheet, req.RangeAddress, req.TableName, req.HasHeaders) }))

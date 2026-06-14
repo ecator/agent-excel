@@ -8,6 +8,7 @@ using AgentExcel.Services;
 using AgentExcel.Utils;
 
 using NUnit.Framework;
+
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace AgentExcel.Tests.Services;
@@ -222,4 +223,70 @@ public class DataServiceTests : BaseTests
 
         Assert.That(ex!.Message, Contains.Substring("Invalid Excel range address"));
     }
+
+    [Test]
+    [Category("COM")]
+    public void ReadTableAsMarkdown_WhenTableExists_ReturnsMarkdownFormat()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Header1");
+        _service.WriteRange(_wbName, "Sheet1", "B1", "Header2");
+        _service.WriteRange(_wbName, "Sheet1", "A2", "Val\\1|test");
+        _service.WriteRange(_wbName, "Sheet1", "B2", "Val2\nLine2");
+
+        _service.ConvertToTable(_wbName, "Sheet1", "A1:B2", "TestTable1", true);
+
+        // Act
+        string markdown = _service.ReadTableAsMarkdown(_wbName, "Sheet1", "TestTable1");
+
+        // Assert
+        string expected = "| Header1 | Header2 |\r\n| --- | --- |\r\n| Val\\\\1\\|test | Val2<br>Line2 |";
+        Assert.That(markdown.Replace("\r\n", "\n"), Is.EqualTo(expected.Replace("\r\n", "\n")));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void ListTables_WhenTablesExist_ReturnsDictionaryWithTables()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "H1");
+        _service.WriteRange(_wbName, "Sheet1", "B1", "H2");
+        _service.ConvertToTable(_wbName, "Sheet1", "A1:B1", "Table1", true);
+
+        // Act
+        var listSpecific = _service.ListTables(_wbName, "Sheet1");
+        var listAll = _service.ListTables(_wbName, null);
+
+        // Assert
+        Assert.That(listSpecific, Is.Not.Null);
+        Assert.That(listSpecific.Count, Is.EqualTo(1));
+        Assert.That(listSpecific.ContainsKey("Sheet1"), Is.True);
+        Assert.That(listSpecific["Sheet1"], Contains.Item("Table1"));
+
+        Assert.That(listAll, Is.Not.Null);
+        Assert.That(listAll.Count, Is.EqualTo(1));
+        Assert.That(listAll.ContainsKey("Sheet1"), Is.True);
+        Assert.That(listAll["Sheet1"], Contains.Item("Table1"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void ListTables_WhenNoTablesExist_ReturnsEmptyDictionary()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act
+        var listSpecific = _service!.ListTables(_wbName, "Sheet1");
+        var listAll = _service.ListTables(_wbName, null);
+
+        // Assert
+        Assert.That(listSpecific, Is.Not.Null);
+        Assert.That(listSpecific, Is.Empty);
+        Assert.That(listAll, Is.Not.Null);
+        Assert.That(listAll, Is.Empty);
+    }
 }
+

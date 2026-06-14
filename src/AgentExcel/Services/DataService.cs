@@ -231,6 +231,113 @@ public class DataService : ExcelServiceBase
         });
     }
 
+    public string ReadTableAsMarkdown(string workbookName, string sheetName, string tableName)
+    {
+        var matrix = ReadTable(workbookName, sheetName, tableName);
+        if (matrix == null)
+        {
+            return string.Empty;
+        }
+
+        int rowStart = matrix.GetLowerBound(0);
+        int rowEnd = matrix.GetUpperBound(0);
+        int colStart = matrix.GetLowerBound(1);
+        int colEnd = matrix.GetUpperBound(1);
+
+        int rowCount = rowEnd - rowStart + 1;
+        int colCount = colEnd - colStart + 1;
+
+        if (rowCount == 0 || colCount == 0)
+        {
+            return string.Empty;
+        }
+
+        var headers = new string[colCount];
+        for (int c = 0; c < colCount; c++)
+        {
+            headers[c] = matrix[rowStart, colStart + c]?.ToString() ?? "";
+        }
+
+        int bodyRowCount = rowCount - 1;
+        if (bodyRowCount < 0) bodyRowCount = 0;
+        var body = new string[bodyRowCount, colCount];
+        for (int r = 0; r < bodyRowCount; r++)
+        {
+            for (int c = 0; c < colCount; c++)
+            {
+                body[r, c] = matrix[rowStart + 1 + r, colStart + c]?.ToString() ?? "";
+            }
+        }
+
+        return MarkdownTableHelper.ToMarkdownTable(headers, body);
+    }
+
+    public Dictionary<string, List<string>> ListTables(string workbookName, string? sheetName)
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Sheets? sheets = null;
+            Excel.Worksheet? ws = null;
+            Excel.ListObjects? tables = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                var results = new Dictionary<string, List<string>>();
+
+                if (!string.IsNullOrWhiteSpace(sheetName))
+                {
+                    ws = GetWorksheet(wb, sheetName);
+                    tables = ws.ListObjects;
+                    var tableNames = new List<string>();
+                    foreach (Excel.ListObject t in tables)
+                    {
+                        tableNames.Add(t.Name);
+                        SafeReleaseComObject(t);
+                    }
+                    if (tableNames.Count > 0)
+                    {
+                        results[ws.Name] = tableNames;
+                    }
+                }
+                else
+                {
+                    sheets = wb.Sheets;
+                    foreach (object s in sheets)
+                    {
+                        if (s is Excel.Worksheet worksheet)
+                        {
+                            var sheetTables = worksheet.ListObjects;
+                            var tableNames = new List<string>();
+                            foreach (Excel.ListObject t in sheetTables)
+                            {
+                                tableNames.Add(t.Name);
+                                SafeReleaseComObject(t);
+                            }
+                            SafeReleaseComObject(sheetTables);
+
+                            if (tableNames.Count > 0)
+                            {
+                                results[worksheet.Name] = tableNames;
+                            }
+                        }
+                        SafeReleaseComObject(s);
+                    }
+                }
+
+                return results;
+            }
+            finally
+            {
+                SafeReleaseComObject(tables);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(sheets);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+
     public string ConvertToTable(string workbookName, string sheetName, string rangeAddress, string? tableName, bool hasHeaders)
     {
         return ExecuteWithRetry(() =>
