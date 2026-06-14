@@ -97,8 +97,9 @@ When writing C# code that operates on Excel COM, the AI must strictly follow the
 
 ## 9. Build and Verification Policy
 * **Build Script Requirement**: Do NOT run `dotnet build` directly to compile the project, as the executable might be occupied by running processes or during testing, causing compilation failures. You MUST use the `scripts/build.ps1` script, which stops any potentially running daemon processes before compiling.
-* **Test Pre-requisite**: Before running `dotnet test` (or any testing commands), you MUST execute `scripts/build.ps1` once to ensure the latest code is successfully compiled and any blocking processes are terminated.
-* **Verification Scope**: After code modifications, you only need to compile with the build script and run tests to verify the changes. You do not need to run the compiled `.exe` executable to verify the execution results. Generally, verifying results is done by the user, unless the user explicitly specifies that you need to verify the results through the entire flow yourself.
+* **Test Script Requirement**: Do NOT run `dotnet test` directly to execute tests. You MUST use the `scripts/test.ps1` script instead. This script transparently forwards all arguments to `dotnet test`, meaning options like `--filter` are fully supported.
+* **Test Pre-requisite**: Before running `scripts/test.ps1` (or any testing commands), you MUST execute `scripts/build.ps1` once to ensure the latest code is successfully compiled and any blocking processes are terminated.
+* **Verification Scope**: After code modifications, you only need to compile with the build script and run tests via `scripts/test.ps1` to verify the changes. You do not need to run the compiled `.exe` executable to verify the execution results. Generally, verifying results is done by the user, unless the user explicitly specifies that you need to verify the results through the entire flow yourself.
 
 ## 10. Test Case Writing Standards
 To ensure software quality, correctness, and maintainability, all tests must follow these industry best practices:
