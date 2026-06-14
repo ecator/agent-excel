@@ -131,4 +131,95 @@ public static class CliCommandHandler
         listener.Stop();
         return port;
     }
+
+    public static async Task ExecuteApiRequest(
+        string command,
+        string[] args,
+        string listenHost,
+        HttpClient? client = null,
+        System.IO.TextReader? stdinReader = null,
+        System.IO.TextWriter? outputWriter = null,
+        int? overridePort = null)
+    {
+        var exeName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "AgentExcel.exe");
+        var outWriter = outputWriter ?? Console.Out;
+        if (args.Length < 2)
+        {
+            outWriter.WriteLine($"Usage: {exeName} {command} <endpoint> [--stdin] [body_param]");
+            return;
+        }
+
+        string endpoint = args[1];
+        if (!endpoint.StartsWith("/"))
+        {
+            endpoint = "/" + endpoint;
+        }
+        if (endpoint.EndsWith("/")){
+            endpoint = endpoint.TrimEnd('/');
+        }
+
+        bool useStdin = args.Skip(2).Any(arg => string.Equals(arg, "--stdin", StringComparison.OrdinalIgnoreCase));
+        string? requestBody = null;
+
+        if (useStdin)
+        {
+            var reader = stdinReader ?? Console.In;
+            requestBody = await reader.ReadToEndAsync();
+        }
+        else if (args.Length > 2)
+        {
+            requestBody = args[2];
+        }
+
+        int? port = overridePort ?? ProcessProber.FindRunningServerPort();
+        if (port == null)
+        {
+            outWriter.WriteLine($"Error: Daemon server is not running. Please start the server first by running '{exeName} start'.");
+            return;
+        }
+
+        string url = $"http://{listenHost}:{port}{endpoint}";
+        var method = string.Equals(command, "post", StringComparison.OrdinalIgnoreCase) ? HttpMethod.Post : HttpMethod.Get;
+
+        using var request = new HttpRequestMessage(method, url);
+        if (requestBody != null)
+        {
+            request.Content = new StringContent(requestBody, System.Text.Encoding.UTF8, "application/json");
+        }
+
+        HttpClient? localClient = null;
+        try
+        {
+            if (client == null)
+            {
+                localClient = new HttpClient { Timeout = TimeSpan.FromSeconds(300) };
+            }
+            HttpClient activeClient = client ?? localClient!;
+
+            using var response = await activeClient.SendAsync(request);
+            string content = await response.Content.ReadAsStringAsync();
+
+            if ((int)response.StatusCode == 200)
+            {
+                outWriter.WriteLine(content);
+            }
+            else
+            {
+                outWriter.WriteLine($"Error Code: {(int)response.StatusCode}");
+                outWriter.WriteLine(content);
+            }
+        }
+        catch (HttpRequestException)
+        {
+            outWriter.WriteLine($"Error: Daemon server is not running. Please start the server first by running '{exeName} start'.");
+        }
+        catch (Exception ex)
+        {
+            outWriter.WriteLine($"Error sending request: {ex.Message}");
+        }
+        finally
+        {
+            localClient?.Dispose();
+        }
+    }
 }

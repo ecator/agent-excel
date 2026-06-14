@@ -1,3 +1,6 @@
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 $SolutionRootPath = Resolve-Path $(Join-Path $PSScriptRoot "..\")
 $ExePath = Resolve-Path $(Join-Path $PSScriptRoot "..\src\AgentExcel\bin\Debug\net10.0-windows7.0\win-x64\AgentExcel.exe")
 $DllPath = Resolve-Path $(Join-Path $PSScriptRoot "..\src\AgentExcel\bin\Debug\net10.0-windows7.0\win-x64\AgentExcel.dll")
@@ -12,4 +15,9 @@ if (!$IsStop -and $LastSourceUpdateTime -gt $LastBuildTime) {
     & $BuildScript
 }
 
-& $ExePath @args
+if ($MyInvocation.ExpectingInput) {
+    $Input | & $ExePath @args
+}
+else {
+    & $ExePath @args
+}

@@ -48,10 +48,15 @@ class Program
             {
                 var version = Assembly.GetExecutingAssembly()
                     .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
-                    .InformationalVersion 
-                    ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString() 
+                    .InformationalVersion
+                    ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
                     ?? "unknown";
                 Console.WriteLine(version);
+                return;
+            }
+            else if (command == "get" || command == "post")
+            {
+                await CliCommandHandler.ExecuteApiRequest(command, args, ListenHost);
                 return;
             }
             else if (command == "--run-server")
@@ -65,11 +70,13 @@ class Program
         var exeName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "AgentExcel.exe");
         Console.WriteLine("AgentExcel - AI Power for Excel");
         Console.WriteLine("Usage:");
-        Console.WriteLine($"  {exeName} start   (Start daemon)");
-        Console.WriteLine($"  {exeName} stop    (Stop daemon)");
-        Console.WriteLine($"  {exeName} status  (Show status)");
-        Console.WriteLine($"  {exeName} swagger (Open Swagger API testing page)");
-        Console.WriteLine($"  {exeName} version (Show version)");
+        Console.WriteLine($"  {exeName} start                     (Start daemon)");
+        Console.WriteLine($"  {exeName} stop                      (Stop daemon)");
+        Console.WriteLine($"  {exeName} status                    (Show status)");
+        Console.WriteLine($"  {exeName} swagger                   (Open Swagger API testing page)");
+        Console.WriteLine($"  {exeName} version                   (Show version)");
+        Console.WriteLine($"  {exeName} get <endpoint> [--stdin] [body_param]");
+        Console.WriteLine($"  {exeName} post <endpoint> [--stdin] [body_param]");
     }
 
     static void RunServer(int port)
