@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 using AgentExcel.Models;
 using AgentExcel.Providers;
+using AgentExcel.Utils;
 
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -541,13 +542,13 @@ public class DataService : ExcelServiceBase
                     if (style.FontSize != null) font.Size = style.FontSize;
                     if (style.Bold != null) font.Bold = style.Bold;
                     if (style.Italic != null) font.Italic = style.Italic;
-                    if (style.Color != null) font.Color = HexToOleColor(style.Color);
+                    if (style.Color != null) font.Color = ColorHelper.HexToOleColor(style.Color);
                 }
 
                 if (style.BackgroundColor != null)
                 {
                     interior = range.Interior;
-                    interior.Color = HexToOleColor(style.BackgroundColor);
+                    interior.Color = ColorHelper.HexToOleColor(style.BackgroundColor);
                 }
 
                 if (style.HorizontalAlignment != null)
@@ -581,22 +582,5 @@ public class DataService : ExcelServiceBase
                 SafeReleaseComObject(wb);
             }
         });
-    }
-
-    private int HexToOleColor(string hex)
-    {
-        try
-        {
-            hex = hex.TrimStart('#');
-            if (hex.Length == 6)
-            {
-                int r = int.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
-                int g = int.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
-                int b = int.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
-                return (b << 16) | (g << 8) | r;
-            }
-        }
-        catch { }
-        return 0;
     }
 }

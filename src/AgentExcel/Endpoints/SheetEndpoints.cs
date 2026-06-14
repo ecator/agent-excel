@@ -58,5 +58,21 @@ public static class SheetEndpoints
         })
         .WithTags("Sheets")
         .WithSummary("Move a sheet to the target workbook. If target workbook is omitted, the source workbook is used. Position 0 for first, -1 for last.");
+
+        sheets.MapPost("/set-color", (SetSheetColorRequest req, SheetService sheetService) =>
+        {
+            sheetService.SetSheetColor(req.Workbook, req.Sheet, req.Color);
+            return Results.Text($"color of {req.Sheet} is set to {req.Color}");
+        })
+        .WithTags("Sheets")
+        .WithSummary("Set the tab color of a specified worksheet");
+
+        sheets.MapPost("/set-visible", (SetSheetVisibilityRequest req, SheetService sheetService) =>
+        {
+            sheetService.SetSheetVisibility(req.Workbook, req.Sheet, req.Visibility);
+            return Results.Text($"visibility of {req.Sheet} is set to {req.Visibility}");
+        })
+        .WithTags("Sheets")
+        .WithSummary("Set the visibility state of a specified worksheet (Visible, Hidden, or VeryHidden)");
     }
 }

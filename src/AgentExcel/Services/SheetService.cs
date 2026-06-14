@@ -1,4 +1,6 @@
+using AgentExcel.Models;
 using AgentExcel.Providers;
+using AgentExcel.Utils;
 
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -10,7 +12,7 @@ public class SheetService : ExcelServiceBase
     {
     }
 
-    public List<string> ListSheets(string workbookName)
+    public List<WorksheetInfo> ListSheets(string workbookName)
     {
         return ExecuteWithRetry(() =>
         {
@@ -20,12 +22,12 @@ public class SheetService : ExcelServiceBase
             {
                 wb = GetWorkbook(workbookName);
                 sheets = wb.Sheets;
-                var names = new List<string>();
+                var list = new List<WorksheetInfo>();
                 foreach (object s in sheets)
                 {
                     if (s is Excel.Worksheet ws)
                     {
-                        names.Add(ws.Name);
+                        list.Add(GetWorksheetInfo(ws));
                         SafeReleaseComObject(ws);
                     }
                     else if (s != null)
@@ -33,7 +35,7 @@ public class SheetService : ExcelServiceBase
                         SafeReleaseComObject(s);
                     }
                 }
-                return names;
+                return list;
             }
             finally
             {
@@ -432,6 +434,154 @@ public class SheetService : ExcelServiceBase
                     SafeReleaseComObject(targetWb);
                 }
                 SafeReleaseComObject(sourceWb);
+            }
+        });
+    }    public WorksheetInfo GetWorksheetInfo(string workbookName, string sheetName)
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                ws = GetWorksheet(wb, sheetName);
+                return GetWorksheetInfo(ws);
+            }
+            finally
+            {
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+    private WorksheetInfo GetWorksheetInfo(Excel.Worksheet ws)
+    {
+        string name = ws.Name;
+        string color = "None";
+        Excel.Tab? tab = null;
+        try
+        {
+            tab = ws.Tab;
+            object colorVal = tab.Color;
+            if (colorVal is not bool b || b)
+            {
+                int colorIndexVal = Convert.ToInt32(tab.ColorIndex);
+                if (colorIndexVal != -4142) // xlColorIndexNone
+                {
+                    long oleColor = Convert.ToInt64(colorVal);
+                    color = ColorHelper.OleColorToHex(oleColor);
+                }
+            }
+        }
+        finally
+        {
+            SafeReleaseComObject(tab);
+        }
+
+        Excel.XlSheetVisibility visibility = ws.Visible;
+        string visibilityStr = visibility switch
+        {
+            Excel.XlSheetVisibility.xlSheetVisible => "Visible",
+            Excel.XlSheetVisibility.xlSheetHidden => "Hidden",
+            Excel.XlSheetVisibility.xlSheetVeryHidden => "VeryHidden",
+            _ => visibility.ToString()
+        };
+
+        return new WorksheetInfo(name, color, visibilityStr);
+    }
+
+    public void SetSheetColor(string workbookName, string sheetName, string color)
+    {
+        ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Tab? tab = null;
+            try
+            {
+                wb = GetWorkbook(workbookName, createNew: true);
+                ws = GetWorksheet(wb, sheetName);
+                tab = ws.Tab;
+
+                if (string.IsNullOrEmpty(color) || color.Equals("None", StringComparison.OrdinalIgnoreCase))
+                {
+                    tab.ColorIndex = Excel.XlColorIndex.xlColorIndexNone;
+                }
+                else
+                {
+                    tab.Color = ColorHelper.HexToOleColor(color);
+                }
+            }
+            finally
+            {
+                SafeReleaseComObject(tab);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+
+    public void SetSheetVisibility(string workbookName, string sheetName, string visibility)
+    {
+        ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Sheets? sheets = null;
+            try
+            {
+                wb = GetWorkbook(workbookName, createNew: true);
+                ws = GetWorksheet(wb, sheetName);
+
+                Excel.XlSheetVisibility targetVisibility = visibility.ToLowerInvariant() switch
+                {
+                    "visible" => Excel.XlSheetVisibility.xlSheetVisible,
+                    "hidden" => Excel.XlSheetVisibility.xlSheetHidden,
+                    "veryhidden" => Excel.XlSheetVisibility.xlSheetVeryHidden,
+                    _ => throw new ArgumentException($"Invalid visibility state '{visibility}'. Allowed values are 'Visible', 'Hidden', or 'VeryHidden'.", nameof(visibility))
+                };
+
+                // Check that at least one sheet remains visible
+                if (targetVisibility == Excel.XlSheetVisibility.xlSheetHidden ||
+                    targetVisibility == Excel.XlSheetVisibility.xlSheetVeryHidden)
+                {
+                    if (ws.Visible == Excel.XlSheetVisibility.xlSheetVisible)
+                    {
+                        sheets = wb.Sheets;
+                        int visibleCount = 0;
+                        foreach (object s in sheets)
+                        {
+                            if (s is Excel.Worksheet tempWs)
+                            {
+                                if (tempWs.Visible == Excel.XlSheetVisibility.xlSheetVisible)
+                                {
+                                    visibleCount++;
+                                }
+                                SafeReleaseComObject(tempWs);
+                            }
+                            else if (s != null)
+                            {
+                                SafeReleaseComObject(s);
+                            }
+                        }
+
+                        if (visibleCount <= 1)
+                        {
+                            throw new InvalidOperationException("Cannot hide the only visible worksheet in the workbook. At least one worksheet must remain visible.");
+                        }
+                    }
+                }
+
+                ws.Visible = targetVisibility;
+            }
+            finally
+            {
+                SafeReleaseComObject(sheets);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
             }
         });
     }
