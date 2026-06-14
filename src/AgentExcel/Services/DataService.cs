@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 
 using AgentExcel.Models;
 using AgentExcel.Providers;
@@ -105,7 +106,11 @@ public class DataService : ExcelServiceBase
                 wb = GetWorkbook(workbookName, createNew: true);
                 ws = GetWorksheet(wb, sheetName);
                 range = GetRange(ws, rangeAddress);
-                range.Value2 = value;
+
+                var convertedValue = ConvertValueForExcel(value);
+                ValidateRangeAndValueDimensions(range, convertedValue);
+
+                range.Value2 = convertedValue;
             }
             finally
             {
@@ -116,9 +121,142 @@ public class DataService : ExcelServiceBase
         });
     }
 
+    private object ConvertValueForExcel(object value)
+    {
+        if (value == null)
+        {
+            return null!;
+        }
+
+        if (value is JsonElement element)
+        {
+            return ConvertJsonElement(element);
+        }
+
+        // Handle nested arrays/lists (jagged array or list of lists)
+        if (value is System.Collections.IEnumerable enumerable && !(value is string))
+        {
+            // First, let's check if it is a 2D array already (like object[,])
+            if (value.GetType().IsArray && value.GetType().GetArrayRank() == 2)
+            {
+                return value;
+            }
+
+            // Convert to a List<List<object?>> first
+            var list2D = new List<List<object?>>();
+            foreach (var rowObj in enumerable)
+            {
+                if (rowObj is System.Collections.IEnumerable rowEnumerable && !(rowObj is string))
+                {
+                    var rowList = new List<object?>();
+                    foreach (var cellObj in rowEnumerable)
+                    {
+                        rowList.Add(cellObj);
+                    }
+                    list2D.Add(rowList);
+                }
+                else
+                {
+                    // If it's a 1D collection (like a flat list/array), treat it as a single row
+                    var rowList = new List<object?>();
+                    foreach (var cellObj in enumerable)
+                    {
+                        rowList.Add(cellObj);
+                    }
+                    list2D.Add(rowList);
+                    break; // break because we processed all elements as a single row
+                }
+            }
+
+            if (list2D.Count > 0)
+            {
+                int rows = list2D.Count;
+                int cols = list2D.Max(r => r.Count);
+                object[,] matrix = new object[rows, cols];
+                for (int r = 0; r < rows; r++)
+                {
+                    for (int c = 0; c < list2D[r].Count; c++)
+                    {
+                        var cellVal = list2D[r][c];
+                        if (cellVal != null)
+                        {
+                            matrix[r, c] = cellVal is JsonElement el ? ConvertJsonElement(el) : cellVal;
+                        }
+                    }
+                }
+                return matrix;
+            }
+        }
+
+        return value;
+    }
+
+    private object ConvertJsonElement(JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.String:
+                return element.GetString() ?? string.Empty;
+            case JsonValueKind.Number:
+                if (element.TryGetInt32(out int i)) return i;
+                if (element.TryGetInt64(out long l)) return l;
+                if (element.TryGetDouble(out double d)) return d;
+                return element.GetRawText();
+            case JsonValueKind.True:
+                return true;
+            case JsonValueKind.False:
+                return false;
+            case JsonValueKind.Null:
+                return null!;
+            case JsonValueKind.Array:
+                int rowCount = element.GetArrayLength();
+                if (rowCount == 0) return new object[0, 0];
+
+                var firstRow = element[0];
+                if (firstRow.ValueKind == JsonValueKind.Array)
+                {
+                    int colCount = 0;
+                    for (int idx = 0; idx < rowCount; idx++)
+                    {
+                        if (element[idx].ValueKind == JsonValueKind.Array)
+                        {
+                            colCount = Math.Max(colCount, element[idx].GetArrayLength());
+                        }
+                    }
+
+                    object[,] matrix = new object[rowCount, colCount];
+                    for (int r = 0; r < rowCount; r++)
+                    {
+                        var rowEl = element[r];
+                        if (rowEl.ValueKind == JsonValueKind.Array)
+                        {
+                            int rowLength = rowEl.GetArrayLength();
+                            for (int c = 0; c < rowLength; c++)
+                            {
+                                matrix[r, c] = ConvertJsonElement(rowEl[c]);
+                            }
+                        }
+                    }
+                    return matrix;
+                }
+                else
+                {
+                    // 1D array: convert to a 1-row 2D array
+                    object[,] matrix = new object[1, rowCount];
+                    for (int c = 0; c < rowCount; c++)
+                    {
+                        matrix[0, c] = ConvertJsonElement(element[c]);
+                    }
+                    return matrix;
+                }
+            default:
+                return element.GetRawText();
+        }
+    }
 
 
-    public void WriteFormula(string workbookName, string sheetName, string rangeAddress, string formula)
+
+    public void WriteFormula(string workbookName, string sheetName, string rangeAddress, object formula)
     {
         ExecuteWithRetry(() =>
         {
@@ -130,13 +268,18 @@ public class DataService : ExcelServiceBase
                 wb = GetWorkbook(workbookName, createNew: true);
                 ws = GetWorksheet(wb, sheetName);
                 range = GetRange(ws, rangeAddress);
+
+                var convertedFormula = ConvertValueForExcel(formula);
+                ValidateRangeAndValueDimensions(range, convertedFormula);
+                ValidateFormulaValues(convertedFormula);
+
                 try
                 {
-                    ((dynamic)range).Formula2 = formula;
+                    ((dynamic)range).Formula2 = convertedFormula;
                 }
                 catch
                 {
-                    range.Formula = formula;
+                    range.Formula = convertedFormula;
                 }
             }
             finally
@@ -148,7 +291,45 @@ public class DataService : ExcelServiceBase
         });
     }
 
-    public object? ReadFormula(string workbookName, string sheetName, string rangeAddress)
+    private void ValidateFormulaValues(object? convertedFormula)
+    {
+        if (convertedFormula is null)
+        {
+            throw new ArgumentException("Formula cannot be null.");
+        }
+
+        if (convertedFormula is object[,] matrix)
+        {
+            int rows = matrix.GetLength(0);
+            int cols = matrix.GetLength(1);
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    object? cellVal = matrix[r, c];
+                    if (cellVal is null)
+                    {
+                        throw new ArgumentException("Formula cell value cannot be null.");
+                    }
+                    string formulaStr = cellVal.ToString() ?? "";
+                    if (!formulaStr.StartsWith('='))
+                    {
+                        throw new ArgumentException($"Formula must start with '='. Found: '{formulaStr}'");
+                    }
+                }
+            }
+        }
+        else
+        {
+            string formulaStr = convertedFormula.ToString() ?? "";
+            if (!formulaStr.StartsWith('='))
+            {
+                throw new ArgumentException($"Formula must start with '='. Found: '{formulaStr}'");
+            }
+        }
+    }
+
+    public Dictionary<string, string> ReadFormula(string workbookName, string sheetName, string? rangeAddress)
     {
         return ExecuteWithRetry(() =>
         {
@@ -159,8 +340,64 @@ public class DataService : ExcelServiceBase
             {
                 wb = GetWorkbook(workbookName);
                 ws = GetWorksheet(wb, sheetName);
-                range = GetRange(ws, rangeAddress);
-                return range.Formula;
+
+                if (string.IsNullOrWhiteSpace(rangeAddress))
+                {
+                    range = ws.UsedRange;
+                }
+                else
+                {
+                    range = GetRange(ws, rangeAddress);
+                }
+
+                var results = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                if (range == null)
+                {
+                    return results;
+                }
+
+                int startRow = range.Row;
+                int startCol = range.Column;
+                object rawFormula = range.Formula;
+
+                if (rawFormula == null)
+                {
+                    return results;
+                }
+
+                if (rawFormula is object[,] matrix)
+                {
+                    int rows = matrix.GetLength(0);
+                    int cols = matrix.GetLength(1);
+
+                    for (int r = 1; r <= rows; r++)
+                    {
+                        for (int c = 1; c <= cols; c++)
+                        {
+                            object? val = matrix[r, c];
+                            if (val != null)
+                            {
+                                string strVal = val.ToString() ?? "";
+                                if (strVal.StartsWith('='))
+                                {
+                                    string cellAddress = $"{GetColumnLetter(startCol + c - 1)}{startRow + r - 1}";
+                                    results[cellAddress] = strVal;
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    string strVal = rawFormula.ToString() ?? "";
+                    if (strVal.StartsWith('='))
+                    {
+                        string cellAddress = $"{GetColumnLetter(startCol)}{startRow}";
+                        results[cellAddress] = strVal;
+                    }
+                }
+
+                return results;
             }
             finally
             {
@@ -851,5 +1088,42 @@ public class DataService : ExcelServiceBase
             columnNumber = (columnNumber - temp - 1) / 26;
         }
         return columnName;
+    }
+
+    private void ValidateRangeAndValueDimensions(Excel.Range range, object? convertedValue)
+    {
+        if (convertedValue is null)
+        {
+            return;
+        }
+
+        Excel.Range? rows = null;
+        Excel.Range? cols = null;
+        try
+        {
+            rows = range.Rows;
+            cols = range.Columns;
+            int rangeRows = rows.Count;
+            int rangeCols = cols.Count;
+
+            int valRows = 1;
+            int valCols = 1;
+
+            if (convertedValue is object[,] matrix)
+            {
+                valRows = matrix.GetLength(0);
+                valCols = matrix.GetLength(1);
+            }
+
+            if (rangeRows != valRows || rangeCols != valCols)
+            {
+                throw new ArgumentException($"The size of the target range ({rangeRows}x{rangeCols}) does not match the size of the data to be written ({valRows}x{valCols}).");
+            }
+        }
+        finally
+        {
+            SafeReleaseComObject(cols);
+            SafeReleaseComObject(rows);
+        }
     }
 }

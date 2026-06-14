@@ -239,6 +239,83 @@ public class DataServiceTests : BaseTests
         Assert.That(ex!.Message, Contains.Substring("Invalid Excel range address"));
     }
 
+    [Test]
+    public void WriteRange_WithJsonElement2DArray_WritesSuccessfully()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        var json = "[[\"Col1\", \"Col2\"], [\"Val1\", 123.45]]";
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var jsonElement = doc.RootElement;
+
+        // Act
+        _service!.WriteRange(_wbName, "Sheet1", "A1:B2", jsonElement);
+
+        // Assert
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1:B2");
+        Assert.That(results["A1"]?.ToString(), Is.EqualTo("Col1"));
+        Assert.That(results["B1"]?.ToString(), Is.EqualTo("Col2"));
+        Assert.That(results["A2"]?.ToString(), Is.EqualTo("Val1"));
+        Assert.That(Convert.ToDouble(results["B2"]), Is.EqualTo(123.45).Within(0.001));
+    }
+
+    [Test]
+    public void WriteRange_WithJaggedArray_WritesSuccessfully()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        var jagged = new object[][]
+        {
+            new object[] { "Jagged1", "Jagged2" },
+            new object[] { 456, "Jagged3" }
+        };
+
+        // Act
+        _service!.WriteRange(_wbName, "Sheet1", "A1:B2", jagged);
+
+        // Assert
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1:B2");
+        Assert.That(results["A1"]?.ToString(), Is.EqualTo("Jagged1"));
+        Assert.That(results["B1"]?.ToString(), Is.EqualTo("Jagged2"));
+        Assert.That(Convert.ToInt32(results["A2"]), Is.EqualTo(456));
+        Assert.That(results["B2"]?.ToString(), Is.EqualTo("Jagged3"));
+    }
+
+    [Test]
+    public void WriteRange_WithMismatchedScalarSize_ThrowsArgumentException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.WriteRange(_wbName, "Sheet1", "A1:B2", "SingleValue");
+        });
+
+        Assert.That(ex!.Message, Contains.Substring("does not match the size of the data to be written"));
+    }
+
+    [Test]
+    public void WriteRange_WithMismatchedMatrixSize_ThrowsArgumentException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        var jagged = new object[][]
+        {
+            new object[] { "Val1", "Val2", "Val3" },
+            new object[] { "Val4", "Val5", "Val6" }
+        };
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.WriteRange(_wbName, "Sheet1", "A1:B2", jagged);
+        });
+
+        Assert.That(ex!.Message, Contains.Substring("does not match the size of the data to be written"));
+    }
+
 
     [Test]
     [Category("COM")]
@@ -439,6 +516,150 @@ public class DataServiceTests : BaseTests
         Assert.That(address, Is.EqualTo("$A$1:$B$2"));
         var tables = _service.ListTables(_wbName, "Sheet1");
         Assert.That(tables.ContainsKey("Sheet1"), Is.False);
+    }
+
+    [Test]
+    [Category("COM")]
+    public void ReadFormula_WhenRangeIsNotEmpty_ReadsRequestedCellFormulas()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", 10);
+        _service.WriteRange(_wbName, "Sheet1", "A2", 20);
+        _service.WriteFormula(_wbName, "Sheet1", "A3", "=SUM(A1:A2)");
+
+        // Act
+        var results = _service.ReadFormula(_wbName, "Sheet1", "A1:A3");
+
+        // Assert
+        Assert.That(results, Is.Not.Null);
+        Assert.That(results.Count, Is.EqualTo(1));
+        Assert.That(results.ContainsKey("A3"), Is.True);
+        Assert.That(results["A3"], Is.EqualTo("=SUM(A1:A2)"));
+        Assert.That(results.ContainsKey("A1"), Is.False);
+    }
+
+    [Test]
+    [Category("COM")]
+    public void ReadFormula_WhenRangeIsEmpty_ReadsUsedRangeFormulas()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "B1", 5);
+        _service.WriteFormula(_wbName, "Sheet1", "B2", "=B1*2");
+
+        // Act
+        var results = _service.ReadFormula(_wbName, "Sheet1", "");
+
+        // Assert
+        Assert.That(results, Is.Not.Null);
+        Assert.That(results.Count, Is.EqualTo(1));
+        Assert.That(results.ContainsKey("B2"), Is.True);
+        Assert.That(results["B2"], Is.EqualTo("=B1*2"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void ReadFormula_WhenCellsHaveNoFormula_OmitsThem()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Plain Value");
+
+        // Act
+        var results = _service.ReadFormula(_wbName, "Sheet1", "A1");
+
+        // Assert
+        Assert.That(results, Is.Not.Null);
+        Assert.That(results, Is.Empty);
+    }
+
+    [Test]
+    [Category("COM")]
+    public void ReadFormula_WhenNoCellsHaveFormula_ReturnsEmptyDictionary()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act
+        var results = _service!.ReadFormula(_wbName, "Sheet1", "A1:B2");
+
+        // Assert
+        Assert.That(results, Is.Not.Null);
+        Assert.That(results, Is.Empty);
+    }
+
+    [Test]
+    [Category("COM")]
+    public void WriteFormula_WithValidSingleFormula_WritesSuccessfully()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act
+        _service!.WriteFormula(_wbName, "Sheet1", "A1", "=TODAY()");
+
+        // Assert
+        var results = _service.ReadFormula(_wbName, "Sheet1", "A1");
+        Assert.That(results.ContainsKey("A1"), Is.True);
+        Assert.That(results["A1"], Is.EqualTo("=TODAY()"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void WriteFormula_WithValidArrayOfFormulas_WritesSuccessfully()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        var formulas = new object[,]
+        {
+            { "=SUM(B1:B2)", "=AVERAGE(C1:C2)" }
+        };
+
+        // Act
+        _service!.WriteFormula(_wbName, "Sheet1", "A1:B1", formulas);
+
+        // Assert
+        var results = _service.ReadFormula(_wbName, "Sheet1", "A1:B1");
+        Assert.That(results.Count, Is.EqualTo(2));
+        Assert.That(results["A1"], Is.EqualTo("=SUM(B1:B2)"));
+        Assert.That(results["B1"], Is.EqualTo("=AVERAGE(C1:C2)"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void WriteFormula_WithFormulaNotStartingWithEqual_ThrowsArgumentException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.WriteFormula(_wbName, "Sheet1", "A1", "NotAFormula");
+        });
+
+        Assert.That(ex!.Message, Contains.Substring("Formula must start with '='"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void WriteFormula_WithMismatchedMatrixSize_ThrowsArgumentException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        var formulas = new object[,]
+        {
+            { "=A1", "=B1" }
+        };
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.WriteFormula(_wbName, "Sheet1", "A1:A2", formulas);
+        });
+
+        Assert.That(ex!.Message, Contains.Substring("does not match the size of the data to be written"));
     }
 }
 

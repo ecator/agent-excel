@@ -22,6 +22,13 @@ public static class DataEndpoints
         .WithTags("Data")
         .WithSummary("Read data from a range");
 
+        data.MapPost("/write-range", (RangeWriteRequest req, DataService dataService) =>
+        {
+            dataService.WriteRange(req.Workbook, req.Sheet, req.Range, req.Value);
+            return Results.Text($"range[{req.Range}] has be filled with data");
+        })
+        .WithTags("Data")
+        .WithSummary("Write data to a range");
 
         data.MapPost("/list-tables", (ListTablesRequest req, DataService dataService) =>
         {
@@ -64,26 +71,22 @@ public static class DataEndpoints
         .WithTags("Data")
         .WithSummary("Convert an Excel Table back to a normal range");
 
-        data.MapPost("/write-range", (RangeWriteRequest req, DataService dataService) =>
+
+        data.MapPost("/read-formula", (ReadRangeRequest req, DataService dataService) =>
         {
-            dataService.WriteRange(req.Workbook, req.Sheet, req.Address, req.Value);
-            return Results.Extensions.Yaml(new { status = "success" });
+            var results = dataService.ReadFormula(req.Workbook, req.Sheet, req.Range);
+            return results.Count > 0 ? Results.Extensions.Yaml(results) : Results.Extensions.Yaml(null);
         })
         .WithTags("Data")
-        .WithSummary("Write data to a range");
+        .WithSummary("Read the formula from a range");
 
         data.MapPost("/write-formula", (WriteFormulaRequest req, DataService dataService) =>
         {
-            dataService.WriteFormula(req.Workbook, req.Sheet, req.Address, req.Formula);
-            return Results.Extensions.Yaml(new { status = "success" });
+            dataService.WriteFormula(req.Workbook, req.Sheet, req.Range, req.Formula);
+            return Results.Text($"range[{req.Range}] has be filled with formula");
         })
         .WithTags("Data")
-        .WithSummary("Write a formula to a range");
-
-        data.MapPost("/read-formula", (ReadRangeRequest req, DataService dataService) =>
-            Results.Extensions.Yaml(new { formula = dataService.ReadFormula(req.Workbook, req.Sheet, req.Range ?? "") }))
-            .WithTags("Data")
-            .WithSummary("Read the formula from a range");
+        .WithSummary("Write formula to a range");
 
         data.MapPost("/find", (FindRequest req, DataService dataService) =>
             Results.Extensions.Yaml(new { results = dataService.Find(req.Workbook, req.Sheet, req.RangeAddress, req.What, req.MatchCase, req.WholeWord) }))

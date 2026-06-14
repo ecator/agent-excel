@@ -6,12 +6,12 @@ namespace AgentExcel.Models;
 public record RangeWriteRequest : WorksheetRequestBase
 {
     /// <summary>
-    /// The target range address (e.g., 'A1:B2').
+    /// The target range (e.g., 'A1:B2').
     /// </summary>
-    public required string Address { get; init; }
+    public required string Range { get; init; }
 
     /// <summary>
-    /// The value to write. Can be a single value or an array of arrays representing rows.
+    /// The value to write. Can be a single value, a 1D array, or a 2D array.
     /// </summary>
     public required object Value { get; init; }
 }

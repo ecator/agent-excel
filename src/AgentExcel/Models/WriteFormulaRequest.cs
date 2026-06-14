@@ -8,10 +8,11 @@ public record WriteFormulaRequest : WorksheetRequestBase
     /// <summary>
     /// The target cell or range address.
     /// </summary>
-    public required string Address { get; init; }
+    public required string Range { get; init; }
 
     /// <summary>
-    /// The Excel formula to write (e.g., '=SUM(A1:A10)').
+    /// The Excel formula to write. Can be a single formula string, a 1D array of formulas, or a 2D array of formulas.
+    /// Each formula must start with '='.
     /// </summary>
-    public required string Formula { get; init; }
+    public required object Formula { get; init; }
 }
