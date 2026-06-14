@@ -23,16 +23,6 @@ public record CellStyle(
 );
 
 /// <summary>
-/// Represents a search result from a grep operation on Excel files.
-/// </summary>
-/// <param name="File">The path of the file containing the match.</param>
-/// <param name="Sheet">The name of the sheet.</param>
-/// <param name="Type">The type of the cell (e.g. formula or value).</param>
-/// <param name="Location">The cell address (e.g., 'A1').</param>
-/// <param name="Content">The matching text content.</param>
-public record GrepResult(string File, string Sheet, string Type, string Location, string Content);
-
-/// <summary>
 /// Information about a shape in a worksheet.
 /// </summary>
 /// <param name="Name">The unique name of the shape.</param>

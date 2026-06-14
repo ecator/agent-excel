@@ -100,11 +100,6 @@ public static class DataEndpoints
 
 
 
-        data.MapPost("/grep", (GrepRequest req, DataService dataService) =>
-            Results.Extensions.Yaml(new { results = dataService.SearchInFolder(req.FolderPath, req.Pattern) }))
-            .WithTags("Data")
-            .WithSummary("Search for text in all Excel files within a folder (includes Cells, TextBoxes, and Shapes)");
-
         data.MapPost("/set-style", (SetStyleRequest req, DataService dataService) =>
         {
             dataService.SetStyle(req.Workbook, req.Sheet, req.Address, req.Style);
