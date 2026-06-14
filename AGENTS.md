@@ -75,7 +75,7 @@ To ensure maximum readability and parser simplicity for both human developers an
 Once the background Web service starts, it exposes the following local endpoints:
 
 * **`GET /status`**: Returns the health status of the daemon and the Excel attachment status (YAML format).
-* **`POST /exit`**: Upon receiving the request, calls `Marshal.ReleaseComObject` to release the Application handle and executes `IHostApplicationLifetime.StopApplication()` to gracefully exit (returns shutdown status in YAML format).
+* **`POST /exit`**: Upon receiving the request, calls `SafeReleaseComObject` to release the Application handle and executes `IHostApplicationLifetime.StopApplication()` to gracefully exit (returns shutdown status in YAML format).
 
 ## 6. ⚠️ Absolute Red Lines: COM Operations and Memory Leak Prevention
 When writing C# code that operates on Excel COM, the AI must strictly follow these rules to prevent leftover `excel.exe` zombie processes or program crashes:
@@ -85,7 +85,8 @@ When writing C# code that operates on Excel COM, the AI must strictly follow the
 3.  **Double-Dot Principle (Never use two dots)**: Do not chain multiple properties or methods of COM objects using two or more consecutive dots.
     * ❌ Incorrect: `var name = excelApp.ActiveWorkbook.ActiveSheet.Name;` (creates implicit intermediate COM objects that cannot be released).
     * ✅ Correct: Declare variables separately, e.g., `Excel.Workbook wb = excelApp.ActiveWorkbook;`.
-4.  **Explicit Manual Release**: All explicitly declared COM objects (Application, Workbook, Worksheet, Range) must be freed using `Marshal.ReleaseComObject(obj)` before completing usage or returning from HTTP endpoints.
+4.  **Explicit Manual Release**: All explicitly declared COM objects (Application, Workbook, Worksheet, Range) must be freed using `SafeReleaseComObject(obj)` before completing usage or returning from HTTP endpoints.
+    * *Note on `SafeReleaseComObject`*: This helper method ensures the target object is non-null and is a valid COM reference (`Marshal.IsComObject`) before invoking `Marshal.ReleaseComObject`, safely wrapping the release call in a `try-catch` block to suppress any potential exceptions and prevent application crashes during cleanups.
 
 ## 7. Exception Handling Guide
 * **RPC_E_CALL_REJECTED (0x80010001)**: If this exception is caught, it typically means the user is editing a cell (Cell Edit Mode), causing Excel to suspend the COM channel. The API should return a clear error message prompting the AI to request the user to press Enter to exit the cell editing mode.
@@ -155,7 +156,7 @@ public void Calculate_WithValidInputs_ReturnsExpectedResult()
 ### 10.6 COM Release in Integration Tests
 If an integration test interacts with actual Office/Excel COM objects:
 * Always wrap the COM operations in `try-finally` blocks.
-* Clean up all instantiated COM objects explicitly using `Marshal.ReleaseComObject` in the `finally` block or `[TearDown]`.
+* Clean up all instantiated COM objects explicitly using `SafeReleaseComObject` in the `finally` block or `[TearDown]`.
 * Ensure that no Excel background processes remain running after the test run.
 
 ### 10.7 Categorization
