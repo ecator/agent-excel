@@ -1308,6 +1308,110 @@ public class SheetServiceTests : BaseTests
         Assert.That(info1.Color, Is.EqualTo("None"));
         Assert.That(info1.Visibility, Is.EqualTo("Visible"));
     }
+
+    [Test]
+    public void GetActiveSheet_WhenWorkbookExists_ReturnsActiveSheetInfo()
+    {
+        // Arrange
+        var app = s_provider!.GetApp(createNew: false);
+        Assert.That(app, Is.Not.Null);
+
+        Excel.Workbooks wbs = app.Workbooks;
+        Excel.Workbook wb = wbs.Add(Type.Missing);
+        string wbName = wb.Name;
+
+        Excel.Sheets sheets = wb.Sheets;
+        Excel.Worksheet ws2 = (Excel.Worksheet)sheets.Add();
+        string ws2Name = ws2.Name;
+
+        // Set ws2 to active
+        ws2.Activate();
+
+        ExcelConnector.SafeReleaseComObject(ws2);
+        ExcelConnector.SafeReleaseComObject(sheets);
+        ExcelConnector.SafeReleaseComObject(wb);
+        ExcelConnector.SafeReleaseComObject(wbs);
+
+        // Act
+        WorksheetInfo info = _service!.GetActiveSheet(wbName);
+
+        // Assert
+        Assert.That(info, Is.Not.Null);
+        Assert.That(info.Name, Is.EqualTo(ws2Name));
+    }
+
+    [Test]
+    public void GetActiveSheet_WhenWorkbookDoesNotExist_ThrowsException()
+    {
+        // Act & Assert
+        Assert.That(() => _service!.GetActiveSheet("NonExistentWorkbookName"),
+            Throws.TypeOf<Exception>().And.Message.Contains("not found"));
+    }
+
+    [Test]
+    public void SetActiveSheet_WhenWorkbookAndSheetExist_ActivatesSheet()
+    {
+        // Arrange
+        var app = s_provider!.GetApp(createNew: false);
+        Assert.That(app, Is.Not.Null);
+
+        Excel.Workbooks wbs = app.Workbooks;
+        Excel.Workbook wb = wbs.Add(Type.Missing);
+        string wbName = wb.Name;
+
+        Excel.Sheets sheets = wb.Sheets;
+        Excel.Worksheet ws2 = (Excel.Worksheet)sheets.Add();
+        string ws2Name = ws2.Name;
+        Excel.Worksheet ws1 = (Excel.Worksheet)sheets[2];
+        string ws1Name = ws1.Name;
+
+        // Ensure ws1 is currently active (though ws2 is typically active after Add)
+        ws1.Activate();
+
+        ExcelConnector.SafeReleaseComObject(ws1);
+        ExcelConnector.SafeReleaseComObject(ws2);
+        ExcelConnector.SafeReleaseComObject(sheets);
+        ExcelConnector.SafeReleaseComObject(wb);
+        ExcelConnector.SafeReleaseComObject(wbs);
+
+        // Verify active sheet before set
+        var initialActive = _service!.GetActiveSheet(wbName);
+        Assert.That(initialActive.Name, Is.EqualTo(ws1Name));
+
+        // Act
+        _service.SetActiveSheet(wbName, ws2Name);
+
+        // Assert
+        var finalActive = _service.GetActiveSheet(wbName);
+        Assert.That(finalActive.Name, Is.EqualTo(ws2Name));
+    }
+
+    [Test]
+    public void SetActiveSheet_WhenWorkbookDoesNotExist_ThrowsException()
+    {
+        // Act & Assert
+        Assert.That(() => _service!.SetActiveSheet("NonExistentWorkbookName", "Sheet1"),
+            Throws.TypeOf<Exception>().And.Message.Contains("not found"));
+    }
+
+    [Test]
+    public void SetActiveSheet_WhenSheetDoesNotExist_ThrowsException()
+    {
+        // Arrange
+        var app = s_provider!.GetApp(createNew: false);
+        Assert.That(app, Is.Not.Null);
+
+        Excel.Workbooks wbs = app.Workbooks;
+        Excel.Workbook wb = wbs.Add(Type.Missing);
+        string wbName = wb.Name;
+
+        ExcelConnector.SafeReleaseComObject(wb);
+        ExcelConnector.SafeReleaseComObject(wbs);
+
+        // Act & Assert
+        Assert.That(() => _service!.SetActiveSheet(wbName, "NonExistentSheetName"),
+            Throws.TypeOf<Exception>().And.Message.Contains("not found"));
+    }
 }
 
 

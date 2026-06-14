@@ -74,5 +74,18 @@ public static class SheetEndpoints
         })
         .WithTags("Sheets")
         .WithSummary("Set the visibility state of a specified worksheet (Visible, Hidden, or VeryHidden)");
+
+        sheets.MapPost("/get-active", (WorkbookRequest req, SheetService sheetService) =>
+            Results.Extensions.Yaml(sheetService.GetActiveSheet(req.Workbook)))
+            .WithTags("Sheets")
+            .WithSummary("Get the active sheet in a workbook");
+
+        sheets.MapPost("/set-active", (WorksheetRequest req, SheetService sheetService) =>
+        {
+            sheetService.SetActiveSheet(req.Workbook, req.Sheet);
+            return Results.Text($"{req.Sheet} activated in {req.Workbook}");
+        })
+        .WithTags("Sheets")
+        .WithSummary("Set the active sheet in a workbook");
     }
 }

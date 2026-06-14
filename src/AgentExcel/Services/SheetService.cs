@@ -457,6 +457,51 @@ public class SheetService : ExcelServiceBase
         });
     }
 
+    public WorksheetInfo GetActiveSheet(string workbookName)
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            object? activeSheetObj = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                activeSheetObj = wb.ActiveSheet;
+                if (activeSheetObj is Excel.Worksheet ws)
+                {
+                    return GetWorksheetInfo(ws);
+                }
+                throw new InvalidOperationException($"No active worksheet found in workbook '{workbookName}'.");
+            }
+            finally
+            {
+                SafeReleaseComObject(activeSheetObj);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+    public void SetActiveSheet(string workbookName, string sheetName)
+    {
+        ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                ws = GetWorksheet(wb, sheetName);
+                ws.Activate();
+            }
+            finally
+            {
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+
     private WorksheetInfo GetWorksheetInfo(Excel.Worksheet ws)
     {
         string name = ws.Name;
