@@ -34,7 +34,7 @@ public static class DataEndpoints
 
         data.MapPost("/read-table", (ReadTableRequest req, DataService dataService) =>
         {
-            var content = dataService.ReadTableAsMarkdown(req.Workbook, req.Sheet, req.Name);
+            var content = dataService.ReadTableAsMarkdown(req.Workbook, req.Sheet, req.Table);
             return Results.Text(content, "text/plain; charset=utf-8");
         })
         .WithTags("Data")

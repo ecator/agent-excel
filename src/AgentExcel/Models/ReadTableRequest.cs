@@ -8,5 +8,5 @@ public record ReadTableRequest : WorksheetRequestBase
     /// <summary>
     /// The name of the Excel Table.
     /// </summary>
-    public required string Name { get; init; }
+    public required string Table { get; init; }
 }
