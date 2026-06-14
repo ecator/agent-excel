@@ -8,5 +8,5 @@ public record ConvertToRangeRequest : WorksheetRequestBase
     /// <summary>
     /// The name of the table to convert.
     /// </summary>
-    public required string TableName { get; init; }
+    public required string Table { get; init; }
 }

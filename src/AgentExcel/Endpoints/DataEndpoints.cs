@@ -49,14 +49,17 @@ public static class DataEndpoints
         .WithSummary("Rename an Excel Table (ListObject)");
 
         data.MapPost("/convert-to-table", (ConvertToTableRequest req, DataService dataService) =>
-            Results.Extensions.Yaml(new { name = dataService.ConvertToTable(req.Workbook, req.Sheet, req.RangeAddress, req.TableName, req.HasHeaders) }))
-            .WithTags("Data")
-            .WithSummary("Convert a normal range to an Excel Table");
+        {
+            var tableName = dataService.ConvertToTable(req.Workbook, req.Sheet, req.Range, req.Table, req.HasHeaders);
+            return Results.Text($"range[{req.Range}] has converted to table[{tableName}]");
+        })
+        .WithTags("Data")
+        .WithSummary("Convert a normal range to an Excel Table");
 
         data.MapPost("/convert-to-range", (ConvertToRangeRequest req, DataService dataService) =>
         {
-            dataService.ConvertToRange(req.Workbook, req.Sheet, req.TableName);
-            return Results.Extensions.Yaml(new { status = "converted" });
+            var address = dataService.ConvertToRange(req.Workbook, req.Sheet, req.Table);
+            return Results.Text($"table[{req.Table}] has converted to  range[{address}]");
         })
         .WithTags("Data")
         .WithSummary("Convert an Excel Table back to a normal range");

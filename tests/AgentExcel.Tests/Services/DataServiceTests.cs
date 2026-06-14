@@ -225,6 +225,22 @@ public class DataServiceTests : BaseTests
     }
 
     [Test]
+    public void WriteRange_WhenRangeIsInvalid_ThrowsFriendlyException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.WriteRange(_wbName, "Sheet1", "InvalidRangeAddress!!!", "Value");
+        });
+
+        Assert.That(ex!.Message, Contains.Substring("Invalid Excel range address"));
+    }
+
+
+    [Test]
     [Category("COM")]
     public void ReadTableAsMarkdown_WhenTableExists_ReturnsMarkdownFormat()
     {
@@ -361,6 +377,68 @@ public class DataServiceTests : BaseTests
         var tables = _service.ListTables(_wbName, "Sheet1");
         Assert.That(tables, Is.Not.Null);
         Assert.That(tables["Sheet1"], Contains.Item("table1"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void ConvertToTable_WithValidInputs_ConvertsAndReturnsTableName()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Col1");
+        _service.WriteRange(_wbName, "Sheet1", "B1", "Col2");
+        _service.WriteRange(_wbName, "Sheet1", "A2", "Val1");
+        _service.WriteRange(_wbName, "Sheet1", "B2", "Val2");
+
+        // Act
+        var tableName = _service.ConvertToTable(_wbName, "Sheet1", "A1:B2", "MyTable", true);
+
+        // Assert
+        Assert.That(tableName, Is.EqualTo("MyTable"));
+        var tables = _service.ListTables(_wbName, "Sheet1");
+        Assert.That(tables, Is.Not.Null);
+        Assert.That(tables["Sheet1"], Contains.Item("MyTable"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void ConvertToTable_WithDuplicateName_ThrowsArgumentException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Col1");
+        _service.WriteRange(_wbName, "Sheet1", "B1", "Col2");
+        _service.ConvertToTable(_wbName, "Sheet1", "A1:B1", "DuplicateTable", true);
+
+        _service.WriteRange(_wbName, "Sheet1", "D1", "Col3");
+        _service.WriteRange(_wbName, "Sheet1", "E1", "Col4");
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+        {
+            _service.ConvertToTable(_wbName, "Sheet1", "D1:E1", "DuplicateTable", true);
+        });
+
+        Assert.That(ex!.Message, Contains.Substring("already in use by another table"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void ConvertToRange_WithValidTable_ConvertsAndReturnsAddress()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Col1");
+        _service.WriteRange(_wbName, "Sheet1", "B1", "Col2");
+        _service.ConvertToTable(_wbName, "Sheet1", "A1:B1", "TableToRange", true);
+
+        // Act
+        var address = _service.ConvertToRange(_wbName, "Sheet1", "TableToRange");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$A$1:$B$2"));
+        var tables = _service.ListTables(_wbName, "Sheet1");
+        Assert.That(tables.ContainsKey("Sheet1"), Is.False);
     }
 }
 

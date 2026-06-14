@@ -32,14 +32,7 @@ public class DataService : ExcelServiceBase
                 }
                 else
                 {
-                    try
-                    {
-                        range = ws.Range[rangeAddress];
-                    }
-                    catch (System.Runtime.InteropServices.COMException ex)
-                    {
-                        throw new ArgumentException($"Invalid Excel range address: '{rangeAddress}'. Ensure it follows a valid format (e.g., 'A1', 'A1:B2', 'A:B').", ex);
-                    }
+                    range = GetRange(ws, rangeAddress);
                 }
 
                 var results = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
@@ -111,7 +104,7 @@ public class DataService : ExcelServiceBase
             {
                 wb = GetWorkbook(workbookName, createNew: true);
                 ws = GetWorksheet(wb, sheetName);
-                range = ws.Range[rangeAddress];
+                range = GetRange(ws, rangeAddress);
                 range.Value2 = value;
             }
             finally
@@ -136,7 +129,7 @@ public class DataService : ExcelServiceBase
             {
                 wb = GetWorkbook(workbookName, createNew: true);
                 ws = GetWorksheet(wb, sheetName);
-                range = ws.Range[rangeAddress];
+                range = GetRange(ws, rangeAddress);
                 try
                 {
                     ((dynamic)range).Formula2 = formula;
@@ -166,7 +159,7 @@ public class DataService : ExcelServiceBase
             {
                 wb = GetWorkbook(workbookName);
                 ws = GetWorksheet(wb, sheetName);
-                range = ws.Range[rangeAddress];
+                range = GetRange(ws, rangeAddress);
                 return range.Formula;
             }
             finally
@@ -182,32 +175,11 @@ public class DataService : ExcelServiceBase
     {
         return ExecuteWithRetry(() =>
         {
-            Excel.Workbook? wb = null;
-            Excel.Worksheet? ws = null;
-            Excel.ListObjects? tables = null;
             Excel.ListObject? table = null;
             Excel.Range? range = null;
             try
             {
-                wb = GetWorkbook(workbookName);
-                ws = GetWorksheet(wb, sheetName);
-                tables = ws.ListObjects;
-
-                foreach (Excel.ListObject t in tables)
-                {
-                    if (t.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        table = t;
-                        break;
-                    }
-                    SafeReleaseComObject(t);
-                }
-
-                if (table == null)
-                {
-                    throw new Exception($"Table '{tableName}' not found in sheet '{ws.Name}'.");
-                }
-
+                table = GetTable(workbookName, sheetName, tableName);
                 range = table.Range;
                 object rawValue = range.Value2;
 
@@ -224,9 +196,6 @@ public class DataService : ExcelServiceBase
             {
                 SafeReleaseComObject(range);
                 SafeReleaseComObject(table);
-                SafeReleaseComObject(tables);
-                SafeReleaseComObject(ws);
-                SafeReleaseComObject(wb);
             }
         });
     }
@@ -338,80 +307,76 @@ public class DataService : ExcelServiceBase
     }
 
 
-    public string ConvertToTable(string workbookName, string sheetName, string rangeAddress, string? tableName, bool hasHeaders)
+    public string ConvertToTable(string workbookName, string sheetName, string range, string? table, bool hasHeaders)
     {
         return ExecuteWithRetry(() =>
         {
             Excel.Workbook? wb = null;
             Excel.Worksheet? ws = null;
-            Excel.Range? range = null;
+            Excel.Range? excelRange = null;
             Excel.ListObjects? tables = null;
-            Excel.ListObject? table = null;
+            Excel.ListObject? listObj = null;
             try
             {
                 wb = GetWorkbook(workbookName, createNew: true);
-                ws = GetWorksheet(wb, sheetName);
-                range = ws.Range[rangeAddress];
-                tables = ws.ListObjects;
 
-                table = tables.Add(Excel.XlListObjectSourceType.xlSrcRange, range,
-                    Type.Missing, hasHeaders ? Excel.XlYesNoGuess.xlYes : Excel.XlYesNoGuess.xlNo);
-
-                if (!string.IsNullOrEmpty(tableName))
+                if (!string.IsNullOrEmpty(table))
                 {
-                    table.Name = tableName;
+                    try
+                    {
+                        Excel.ListObject? existingTable = GetTable(workbookName, null, table);
+                        SafeReleaseComObject(existingTable);
+                        throw new ArgumentException($"Table name '{table}' is already in use by another table in the workbook.");
+                    }
+                    catch (Exception ex) when (ex is not ArgumentException)
+                    {
+                        // Table not found means no duplicate exists, which is normal.
+                    }
                 }
 
-                return table.Name;
+                ws = GetWorksheet(wb, sheetName);
+                excelRange = GetRange(ws, range);
+                tables = ws.ListObjects;
+
+                listObj = tables.Add(Excel.XlListObjectSourceType.xlSrcRange, excelRange,
+                    Type.Missing, hasHeaders ? Excel.XlYesNoGuess.xlYes : Excel.XlYesNoGuess.xlNo);
+
+                if (!string.IsNullOrEmpty(table))
+                {
+                    listObj.Name = table;
+                }
+
+                return listObj.Name;
             }
             finally
             {
-                SafeReleaseComObject(table);
+                SafeReleaseComObject(listObj);
                 SafeReleaseComObject(tables);
-                SafeReleaseComObject(range);
+                SafeReleaseComObject(excelRange);
                 SafeReleaseComObject(ws);
                 SafeReleaseComObject(wb);
             }
         });
     }
 
-    public void ConvertToRange(string workbookName, string sheetName, string tableName)
+    public string ConvertToRange(string workbookName, string sheetName, string table)
     {
-        ExecuteWithRetry(() =>
+        return ExecuteWithRetry(() =>
         {
-            Excel.Workbook? wb = null;
-            Excel.Worksheet? ws = null;
-            Excel.ListObjects? tables = null;
-            Excel.ListObject? table = null;
+            Excel.ListObject? listObj = null;
+            Excel.Range? excelRange = null;
             try
             {
-                wb = GetWorkbook(workbookName, createNew: true);
-                ws = GetWorksheet(wb, sheetName);
-                tables = ws.ListObjects;
-
-                foreach (Excel.ListObject t in tables)
-                {
-                    if (t.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        table = t;
-                        break;
-                    }
-                    SafeReleaseComObject(t);
-                }
-
-                if (table == null)
-                {
-                    throw new Exception($"Table '{tableName}' not found in sheet '{ws.Name}'.");
-                }
-
-                table.Unlist();
+                listObj = GetTable(workbookName, sheetName, table);
+                excelRange = listObj.Range;
+                string address = excelRange.get_Address();
+                listObj.Unlist();
+                return address;
             }
             finally
             {
-                SafeReleaseComObject(table);
-                SafeReleaseComObject(tables);
-                SafeReleaseComObject(ws);
-                SafeReleaseComObject(wb);
+                SafeReleaseComObject(excelRange);
+                SafeReleaseComObject(listObj);
             }
         });
     }
@@ -431,7 +396,7 @@ public class DataService : ExcelServiceBase
             {
                 wb = GetWorkbook(workbookName);
                 ws = GetWorksheet(wb, sheetName);
-                searchRange = string.IsNullOrEmpty(rangeAddress) ? ws.UsedRange : ws.Range[rangeAddress];
+                searchRange = string.IsNullOrEmpty(rangeAddress) ? ws.UsedRange : GetRange(ws, rangeAddress);
 
                 object lookAt = wholeWord ? Excel.XlLookAt.xlWhole : Excel.XlLookAt.xlPart;
 
@@ -487,7 +452,7 @@ public class DataService : ExcelServiceBase
             {
                 wb = GetWorkbook(workbookName, createNew: true);
                 ws = GetWorksheet(wb, sheetName);
-                searchRange = string.IsNullOrEmpty(rangeAddress) ? ws.UsedRange : ws.Range[rangeAddress];
+                searchRange = string.IsNullOrEmpty(rangeAddress) ? ws.UsedRange : GetRange(ws, rangeAddress);
 
                 object lookAt = wholeWord ? Excel.XlLookAt.xlWhole : Excel.XlLookAt.xlPart;
 
@@ -670,7 +635,7 @@ public class DataService : ExcelServiceBase
             {
                 wb = GetWorkbook(workbookName, createNew: true);
                 ws = GetWorksheet(wb, sheetName);
-                range = ws.Range[rangeAddress];
+                range = GetRange(ws, rangeAddress);
 
                 if (style.FontName != null || style.FontSize != null || style.Bold != null || style.Italic != null || style.Color != null)
                 {
@@ -734,69 +699,30 @@ public class DataService : ExcelServiceBase
 
         ExecuteWithRetry(() =>
         {
-            Excel.Workbook? wb = null;
-            Excel.Worksheet? ws = null;
-            Excel.ListObjects? tables = null;
             Excel.ListObject? targetTable = null;
-            Excel.Sheets? sheets = null;
             try
             {
-                wb = GetWorkbook(workbookName, createNew: true);
-                ws = GetWorksheet(wb, sheetName);
-                tables = ws.ListObjects;
+                targetTable = GetTable(workbookName, sheetName, tableName);
 
-                foreach (Excel.ListObject t in tables)
+                // Verify duplicate table name workbook-wide (sheetName is empty/null)
+                try
                 {
-                    if (t.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
+                    Excel.ListObject? existingTable = GetTable(workbookName, null, newTableName);
+                    try
                     {
-                        targetTable = t;
-                        break;
-                    }
-                    SafeReleaseComObject(t);
-                }
-
-                if (targetTable == null)
-                {
-                    throw new Exception($"Table '{tableName}' not found in sheet '{ws.Name}'.");
-                }
-
-                sheets = wb.Sheets;
-                foreach (object s in sheets)
-                {
-                    if (s is Excel.Worksheet worksheet)
-                    {
-                        Excel.ListObjects? sheetTables = null;
-                        try
+                        if (!existingTable.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
                         {
-                            sheetTables = worksheet.ListObjects;
-                            foreach (Excel.ListObject t in sheetTables)
-                            {
-                                try
-                                {
-                                    if (t.Name.Equals(newTableName, StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        if (!t.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            throw new ArgumentException($"Table name '{newTableName}' is already in use by another table in the workbook.");
-                                        }
-                                    }
-                                }
-                                finally
-                                {
-                                    SafeReleaseComObject(t);
-                                }
-                            }
-                        }
-                        finally
-                        {
-                            SafeReleaseComObject(sheetTables);
-                            SafeReleaseComObject(worksheet);
+                            throw new ArgumentException($"Table name '{newTableName}' is already in use by another table in the workbook.");
                         }
                     }
-                    else
+                    finally
                     {
-                        SafeReleaseComObject(s);
+                        SafeReleaseComObject(existingTable);
                     }
+                }
+                catch (Exception ex) when (ex is not ArgumentException)
+                {
+                    // Table not found means no duplicate exists, which is normal.
                 }
 
                 if (tableName.Equals(newTableName, StringComparison.OrdinalIgnoreCase) && tableName != newTableName)
@@ -809,13 +735,109 @@ public class DataService : ExcelServiceBase
             }
             finally
             {
-                SafeReleaseComObject(sheets);
                 SafeReleaseComObject(targetTable);
-                SafeReleaseComObject(tables);
-                SafeReleaseComObject(ws);
-                SafeReleaseComObject(wb);
             }
         });
+    }
+
+    private Excel.ListObject GetTable(string workbookName, string? sheetName, string tableName)
+    {
+        Excel.Workbook? wb = null;
+        Excel.Sheets? sheets = null;
+        Excel.Worksheet? ws = null;
+        Excel.ListObjects? tables = null;
+        Excel.ListObject? targetTable = null;
+        try
+        {
+            wb = GetWorkbook(workbookName);
+            if (!string.IsNullOrWhiteSpace(sheetName))
+            {
+                ws = GetWorksheet(wb, sheetName);
+                tables = ws.ListObjects;
+                foreach (Excel.ListObject t in tables)
+                {
+                    if (t.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        targetTable = t;
+                        break;
+                    }
+                    SafeReleaseComObject(t);
+                }
+            }
+            else
+            {
+                sheets = wb.Sheets;
+                foreach (object s in sheets)
+                {
+                    if (s is Excel.Worksheet worksheet)
+                    {
+                        Excel.ListObjects? sheetTables = null;
+                        try
+                        {
+                            sheetTables = worksheet.ListObjects;
+                            foreach (Excel.ListObject t in sheetTables)
+                            {
+                                if (t.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    targetTable = t;
+                                    break;
+                                }
+                                SafeReleaseComObject(t);
+                            }
+                        }
+                        finally
+                        {
+                            SafeReleaseComObject(sheetTables);
+                            if (targetTable == null)
+                            {
+                                SafeReleaseComObject(worksheet);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        SafeReleaseComObject(s);
+                    }
+
+                    if (targetTable != null)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (targetTable == null)
+            {
+                string scope = string.IsNullOrWhiteSpace(sheetName) ? "workbook" : $"sheet '{sheetName}'";
+                throw new Exception($"Table '{tableName}' not found in {scope}.");
+            }
+
+            return targetTable;
+        }
+        finally
+        {
+            SafeReleaseComObject(tables);
+            SafeReleaseComObject(ws);
+            SafeReleaseComObject(sheets);
+            SafeReleaseComObject(wb);
+        }
+    }
+
+    private static Excel.Range GetRange(Excel.Worksheet ws, string rangeAddress)
+    {
+        if (string.IsNullOrWhiteSpace(rangeAddress))
+        {
+            throw new ArgumentException("Range address cannot be null or empty.", nameof(rangeAddress));
+        }
+
+        try
+        {
+            return ws.Range[rangeAddress];
+        }
+        catch (System.Runtime.InteropServices.COMException ex)
+        {
+            throw new ArgumentException($"Invalid Excel range address: '{rangeAddress}'. Ensure it follows a valid format (e.g., 'A1', 'A1:B2', 'A:B').", ex);
+        }
     }
 
     private static string GetColumnLetter(int columnNumber)
