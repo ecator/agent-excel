@@ -34,8 +34,14 @@ public static class SystemEndpoints
 
         app.MapPost("/exit", (IHostApplicationLifetime lifetime, SystemService systemService) =>
         {
-            systemService.Shutdown();
-            lifetime.StopApplication();
+            try
+            {
+                systemService.Shutdown();
+            }
+            finally
+            {
+                lifetime.StopApplication();
+            }
             return Results.Text("stopped");
         })
         .WithTags("System")
