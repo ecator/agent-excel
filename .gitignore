@@ -9,3 +9,4 @@ obj/
 *.suo
 TestResults/
 Thumbs.db
+~$*.xls*

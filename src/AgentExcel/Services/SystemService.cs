@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using AgentExcel.Models;
 using AgentExcel.Providers;
 
@@ -14,6 +15,28 @@ public class SystemService : ExcelServiceBase
     public void Shutdown()
     {
         ConnectionProvider.Dispose();
+    }
+
+    public string GetActiveWorkbookName()
+    {
+        Excel.Workbook? wb = null;
+        try
+        {
+            wb = GetActiveWorkbook();
+            return wb.Name;
+        }
+        catch (COMException ex) when ((uint)ex.ErrorCode == 0x80010001)
+        {
+            return "Busy";
+        }
+        catch
+        {
+            return "None";
+        }
+        finally
+        {
+            SafeReleaseComObject(wb);
+        }
     }
 
     public void Calculate()

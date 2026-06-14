@@ -23,27 +23,28 @@ public abstract class ExcelServiceBase
     /// </summary>
     protected void SafeReleaseComObject(object? obj) => ConnectionProvider.SafeReleaseComObject(obj);
 
-    public string GetActiveWorkbookName()
+    protected Excel.Workbook GetActiveWorkbook()
     {
         var app = GetApp(createNew: false);
         if (app == null)
         {
-            return "None";
+            throw new Exception("Excel is not running. Please open Excel first.");
         }
 
         Excel.Workbook? wb = null;
         try
         {
             wb = app.ActiveWorkbook;
-            return wb?.Name ?? "None";
+            if (wb == null)
+            {
+                throw new Exception("No active workbook found.");
+            }
+            return wb;
         }
         catch
         {
-            return "Busy";
-        }
-        finally
-        {
             SafeReleaseComObject(wb);
+            throw;
         }
     }
 

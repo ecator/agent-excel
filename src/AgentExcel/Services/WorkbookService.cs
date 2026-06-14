@@ -13,6 +13,45 @@ public class WorkbookService : ExcelServiceBase
     }
 
 
+    public WorkbookInfo GetActiveWorkbookInfo()
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            try
+            {
+                wb = GetActiveWorkbook();
+                return GetWorkbookInfo(wb.Name);
+            }
+            finally
+            {
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+    public void SetActiveWorkbook(string workbookName)
+    {
+        if (string.IsNullOrEmpty(workbookName))
+        {
+            throw new ArgumentException("Workbook name cannot be null or empty.", nameof(workbookName));
+        }
+
+        ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                wb.Activate();
+            }
+            finally
+            {
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
     public WorkbookInfo GetWorkbookInfo(string workbookName)
     {
         return ExecuteWithRetry(() =>

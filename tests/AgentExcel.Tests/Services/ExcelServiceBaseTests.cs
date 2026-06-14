@@ -44,6 +44,13 @@ public class ExcelServiceBaseTests : BaseTests
         Assert.That(() => _service!.PublicGetWorksheet(null!, string.Empty), Throws.ArgumentException);
     }
 
+    [Test]
+    public void GetActiveWorkbook_WhenExcelNotRunning_ThrowsException()
+    {
+        // Act & Assert
+        Assert.That(() => _service!.PublicGetActiveWorkbook(), Throws.TypeOf<Exception>().And.Message.Contains("Excel is not running"));
+    }
+
     private class FakeExcelConnectionProvider : IExcelConnectionProvider
     {
         public Excel.Application? GetApp(bool createNew = false) => null;
@@ -65,6 +72,11 @@ public class ExcelServiceBaseTests : BaseTests
         public Excel.Worksheet PublicGetWorksheet(Excel.Workbook workbook, string sheetName)
         {
             return GetWorksheet(workbook, sheetName);
+        }
+
+        public Excel.Workbook PublicGetActiveWorkbook()
+        {
+            return GetActiveWorkbook();
         }
     }
 }

@@ -42,7 +42,7 @@ public static class WorkbookEndpoints
         workbooks.MapPost("/save", (WorkbookRequest req, WorkbookService workbookService) =>
         {
             workbookService.SaveWorkbook(req.Workbook);
-            return Results.Ok($"saved");
+            return Results.Text($"saved");
         })
         .WithTags("Workbooks")
         .WithSummary("Save a workbook");
@@ -50,7 +50,7 @@ public static class WorkbookEndpoints
         workbooks.MapPost("/saveas", (SaveAsRequest req, WorkbookService workbookService) =>
         {
             workbookService.SaveAsWorkbook(req.Workbook, req.Path);
-            return Results.Ok($"saved to `{req.Path}`");
+            return Results.Text($"saved to `{req.Path}`");
         })
         .WithTags("Workbooks")
         .WithSummary("Save a workbook to a new path");
@@ -58,9 +58,25 @@ public static class WorkbookEndpoints
         workbooks.MapPost("/close", (CloseWorkbookRequest req, WorkbookService workbookService) =>
         {
             workbookService.CloseWorkbook(req.Workbook, req.SaveChanges);
-            return Results.Ok("closed");
+            return Results.Text("closed");
         })
         .WithTags("Workbooks")
         .WithSummary("Close a workbook");
+
+        workbooks.MapPost("/get-active", (WorkbookService workbookService) =>
+        {
+            var result = workbookService.GetActiveWorkbookInfo();
+            return Results.Extensions.Yaml(result);
+        })
+            .WithTags("Workbooks")
+            .WithSummary("Get the active workbook info");
+
+        workbooks.MapPost("/set-active", (WorkbookRequest req, WorkbookService workbookService) =>
+        {
+            workbookService.SetActiveWorkbook(req.Workbook);
+            return Results.Text("activated");
+        })
+            .WithTags("Workbooks")
+            .WithSummary("Set the active workbook");
     }
 }
