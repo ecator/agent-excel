@@ -14,7 +14,7 @@ public static class ShapeEndpoints
     {
         var shapes = app.MapGroup("/shapes").WithOpenApi();
 
-        shapes.MapPost("/list", (UsedRangeRequest req, ShapeService shapeService) =>
+        shapes.MapPost("/list", (WorksheetRequest req, ShapeService shapeService) =>
             Results.Extensions.Yaml(shapeService.ListShapes(req.Workbook, req.Sheet)))
             .WithTags("Shapes")
             .WithSummary("List all shapes and textboxes in a sheet");

@@ -14,7 +14,7 @@ public class DataService : ExcelServiceBase
     {
     }
 
-    public object?[,] ReadRange(string workbookName, string sheetName, string rangeAddress)
+    public Dictionary<string, object> ReadRange(string workbookName, string sheetName, string? rangeAddress)
     {
         return ExecuteWithRetry(() =>
         {
@@ -25,20 +25,71 @@ public class DataService : ExcelServiceBase
             {
                 wb = GetWorkbook(workbookName);
                 ws = GetWorksheet(wb, sheetName);
-                range = ws.Range[rangeAddress];
 
-                object[,] values;
-                object rawValue = range.Value2;
-
-                if (rawValue is object[,] matrix)
+                if (string.IsNullOrWhiteSpace(rangeAddress))
                 {
-                    values = matrix;
+                    range = ws.UsedRange;
                 }
                 else
                 {
-                    values = new object[1, 1] { { rawValue } };
+                    try
+                    {
+                        range = ws.Range[rangeAddress];
+                    }
+                    catch (System.Runtime.InteropServices.COMException ex)
+                    {
+                        throw new ArgumentException($"Invalid Excel range address: '{rangeAddress}'. Ensure it follows a valid format (e.g., 'A1', 'A1:B2', 'A:B').", ex);
+                    }
                 }
-                return values;
+
+                var results = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                if (range == null)
+                {
+                    return results;
+                }
+
+                int startRow = range.Row;
+                int startCol = range.Column;
+                object rawValue = range.Value2;
+
+                if (rawValue == null)
+                {
+                    return results;
+                }
+
+                if (rawValue is object[,] matrix)
+                {
+                    int rows = matrix.GetLength(0);
+                    int cols = matrix.GetLength(1);
+
+                    for (int r = 1; r <= rows; r++)
+                    {
+                        for (int c = 1; c <= cols; c++)
+                        {
+                            object? val = matrix[r, c];
+                            if (val != null)
+                            {
+                                string strVal = val.ToString() ?? "";
+                                if (!string.IsNullOrEmpty(strVal))
+                                {
+                                    string cellAddress = $"{GetColumnLetter(startCol + c - 1)}{startRow + r - 1}";
+                                    results[cellAddress] = val;
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    string strVal = rawValue.ToString() ?? "";
+                    if (!string.IsNullOrEmpty(strVal))
+                    {
+                        string cellAddress = $"{GetColumnLetter(startCol)}{startRow}";
+                        results[cellAddress] = rawValue;
+                    }
+                }
+
+                return results;
             }
             finally
             {
@@ -72,28 +123,7 @@ public class DataService : ExcelServiceBase
         });
     }
 
-    public string GetUsedRangeAddress(string workbookName, string sheetName)
-    {
-        return ExecuteWithRetry(() =>
-        {
-            Excel.Workbook? wb = null;
-            Excel.Worksheet? ws = null;
-            Excel.Range? range = null;
-            try
-            {
-                wb = GetWorkbook(workbookName);
-                ws = GetWorksheet(wb, sheetName);
-                range = ws.UsedRange;
-                return range.get_Address();
-            }
-            finally
-            {
-                SafeReleaseComObject(range);
-                SafeReleaseComObject(ws);
-                SafeReleaseComObject(wb);
-            }
-        });
-    }
+
 
     public void WriteFormula(string workbookName, string sheetName, string rangeAddress, string formula)
     {
@@ -582,5 +612,18 @@ public class DataService : ExcelServiceBase
                 SafeReleaseComObject(wb);
             }
         });
+    }
+
+    private static string GetColumnLetter(int columnNumber)
+    {
+        int temp;
+        string columnName = string.Empty;
+        while (columnNumber > 0)
+        {
+            temp = (columnNumber - 1) % 26;
+            columnName = (char)(65 + temp) + columnName;
+            columnNumber = (columnNumber - temp - 1) / 26;
+        }
+        return columnName;
     }
 }

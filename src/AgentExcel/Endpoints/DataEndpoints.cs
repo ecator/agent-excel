@@ -15,9 +15,12 @@ public static class DataEndpoints
         var data = app.MapGroup("/data").WithOpenApi();
 
         data.MapPost("/read-range", (ReadRangeRequest req, DataService dataService) =>
-            Results.Extensions.Yaml(new { values = dataService.ReadRange(req.Workbook, req.Sheet, req.Address) }))
-            .WithTags("Data")
-            .WithSummary("Read data from a range");
+        {
+            var results = dataService.ReadRange(req.Workbook, req.Sheet, req.Range);
+            return results.Count > 0 ? Results.Extensions.Yaml(results) : Results.Extensions.Yaml(null);
+        })
+        .WithTags("Data")
+        .WithSummary("Read data from a range");
 
         data.MapPost("/read-table", (ReadTableRequest req, DataService dataService) =>
             Results.Extensions.Yaml(new { values = dataService.ReadTable(req.Workbook, req.Sheet, req.Name) }))
@@ -54,7 +57,7 @@ public static class DataEndpoints
         .WithSummary("Write a formula to a range");
 
         data.MapPost("/read-formula", (ReadRangeRequest req, DataService dataService) =>
-            Results.Extensions.Yaml(new { formula = dataService.ReadFormula(req.Workbook, req.Sheet, req.Address) }))
+            Results.Extensions.Yaml(new { formula = dataService.ReadFormula(req.Workbook, req.Sheet, req.Range ?? "") }))
             .WithTags("Data")
             .WithSummary("Read the formula from a range");
 
@@ -68,10 +71,7 @@ public static class DataEndpoints
             .WithTags("Data")
             .WithSummary("Replace all occurrences of a string");
 
-        data.MapPost("/used-range", (UsedRangeRequest req, DataService dataService) =>
-            Results.Extensions.Yaml(new { address = dataService.GetUsedRangeAddress(req.Workbook, req.Sheet) }))
-            .WithTags("Data")
-            .WithSummary("Get the used range address");
+
 
         data.MapPost("/grep", (GrepRequest req, DataService dataService) =>
             Results.Extensions.Yaml(new { results = dataService.SearchInFolder(req.FolderPath, req.Pattern) }))

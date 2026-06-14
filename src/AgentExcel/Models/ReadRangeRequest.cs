@@ -6,7 +6,7 @@ namespace AgentExcel.Models;
 public record ReadRangeRequest : WorksheetRequestBase
 {
     /// <summary>
-    /// The range address (e.g., 'A1:C10' or 'A1').
+    /// The range address (e.g., 'A1:C10' or 'A1'). If null or empty, the used range is read.
     /// </summary>
-    public required string Address { get; init; }
+    public string? Range { get; init; }
 }
