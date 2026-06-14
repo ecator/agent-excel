@@ -150,7 +150,7 @@ public class FindReplaceTests : BaseTests
         // Assert
         Assert.That(results, Is.Not.Null);
         Assert.That(results.Count, Is.EqualTo(2));
-        
+
         var sheet1Match = results.FirstOrDefault(r => r.Sheet == "Sheet1");
         Assert.That(sheet1Match, Is.Not.Null);
         Assert.That(sheet1Match!.Address, Is.EqualTo("$A$1"));

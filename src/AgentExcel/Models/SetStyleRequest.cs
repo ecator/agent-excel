@@ -8,7 +8,7 @@ public record SetStyleRequest : WorksheetRequestBase
     /// <summary>
     /// The target range address.
     /// </summary>
-    public required string Address { get; init; }
+    public required string Range { get; init; }
 
     /// <summary>
     /// The styling options to apply to the range.

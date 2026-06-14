@@ -105,10 +105,18 @@ public static class DataEndpoints
         .WithTags("Data")
         .WithSummary("Replace all occurrences of a string");
 
+        data.MapPost("/get-style", (ReadRangeRequest req, DataService dataService) =>
+        {
+            var result = dataService.GetStyle(req.Workbook, req.Sheet, req.Range);
+            return Results.Extensions.Yaml(result);
+        })
+        .WithTags("Data")
+        .WithSummary("Get cell style. Note: only supports returning the style of the top-left (first) cell of the range.");
+
         data.MapPost("/set-style", (SetStyleRequest req, DataService dataService) =>
         {
-            dataService.SetStyle(req.Workbook, req.Sheet, req.Address, req.Style);
-            return Results.Extensions.Yaml(new { status = "success" });
+            dataService.SetStyle(req.Workbook, req.Sheet, req.Range, req.Style);
+            return Results.Text($"style of range[{req.Range}] has changed");
         })
         .WithTags("Data")
         .WithSummary("Set cell styles (Font, Color, Bold, Alignment, etc.)");

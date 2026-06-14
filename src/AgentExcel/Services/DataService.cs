@@ -814,24 +814,24 @@ public class DataService : ExcelServiceBase
         });
     }
 
-    public void SetStyle(string workbookName, string sheetName, string rangeAddress, CellStyle style)
+    public void SetStyle(string workbookName, string sheetName, string range, CellStyle style)
     {
         ExecuteWithRetry(() =>
         {
             Excel.Workbook? wb = null;
             Excel.Worksheet? ws = null;
-            Excel.Range? range = null;
+            Excel.Range? excelRange = null;
             Excel.Font? font = null;
             Excel.Interior? interior = null;
             try
             {
                 wb = GetWorkbook(workbookName, createNew: true);
                 ws = GetWorksheet(wb, sheetName);
-                range = GetRange(ws, rangeAddress);
+                excelRange = GetRange(ws, range);
 
                 if (style.FontName != null || style.FontSize != null || style.Bold != null || style.Italic != null || style.Color != null)
                 {
-                    font = range.Font;
+                    font = excelRange.Font;
                     if (style.FontName != null) font.Name = style.FontName;
                     if (style.FontSize != null) font.Size = style.FontSize;
                     if (style.Bold != null) font.Bold = style.Bold;
@@ -841,29 +841,29 @@ public class DataService : ExcelServiceBase
 
                 if (style.BackgroundColor != null)
                 {
-                    interior = range.Interior;
+                    interior = excelRange.Interior;
                     interior.Color = ColorHelper.HexToOleColor(style.BackgroundColor);
                 }
 
                 if (style.HorizontalAlignment != null)
                 {
-                    range.HorizontalAlignment = style.HorizontalAlignment switch
+                    excelRange.HorizontalAlignment = style.HorizontalAlignment switch
                     {
                         "Left" => Excel.XlHAlign.xlHAlignLeft,
                         "Center" => Excel.XlHAlign.xlHAlignCenter,
                         "Right" => Excel.XlHAlign.xlHAlignRight,
-                        _ => range.HorizontalAlignment
+                        _ => excelRange.HorizontalAlignment
                     };
                 }
 
                 if (style.VerticalAlignment != null)
                 {
-                    range.VerticalAlignment = style.VerticalAlignment switch
+                    excelRange.VerticalAlignment = style.VerticalAlignment switch
                     {
                         "Top" => Excel.XlVAlign.xlVAlignTop,
                         "Center" => Excel.XlVAlign.xlVAlignCenter,
                         "Bottom" => Excel.XlVAlign.xlVAlignBottom,
-                        _ => range.VerticalAlignment
+                        _ => excelRange.VerticalAlignment
                     };
                 }
             }
@@ -871,7 +871,179 @@ public class DataService : ExcelServiceBase
             {
                 SafeReleaseComObject(interior);
                 SafeReleaseComObject(font);
-                SafeReleaseComObject(range);
+                SafeReleaseComObject(excelRange);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+    public CellStyle GetStyle(string workbookName, string sheetName, string? range)
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? excelRange = null;
+            Excel.Range? cells = null;
+            Excel.Range? firstCell = null;
+            Excel.Font? font = null;
+            Excel.Interior? interior = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                ws = GetWorksheet(wb, sheetName);
+
+                if (string.IsNullOrWhiteSpace(range))
+                {
+                    excelRange = ws.UsedRange;
+                }
+                else
+                {
+                    excelRange = GetRange(ws, range);
+                }
+
+                if (excelRange == null)
+                {
+                    throw new Exception("Target range could not be determined.");
+                }
+
+                cells = excelRange.Cells;
+                firstCell = (Excel.Range)cells[1, 1];
+
+                font = firstCell.Font;
+                interior = firstCell.Interior;
+
+                string? fontName = font.Name?.ToString();
+
+                double? fontSize = null;
+                if (font.Size is double dVal)
+                {
+                    fontSize = dVal;
+                }
+                else if (font.Size is float fVal)
+                {
+                    fontSize = fVal;
+                }
+                else if (font.Size is not null)
+                {
+                    try { fontSize = Convert.ToDouble(font.Size); } catch { }
+                }
+
+                bool? bold = null;
+                if (font.Bold is bool bVal)
+                {
+                    bold = bVal;
+                }
+                else if (font.Bold is not null)
+                {
+                    try { bold = Convert.ToBoolean(font.Bold); } catch { }
+                }
+
+                bool? italic = null;
+                if (font.Italic is bool iVal)
+                {
+                    italic = iVal;
+                }
+                else if (font.Italic is not null)
+                {
+                    try { italic = Convert.ToBoolean(font.Italic); } catch { }
+                }
+
+                string? color = null;
+                if (font.Color is not null)
+                {
+                    try
+                    {
+                        long oleColor = Convert.ToInt64(font.Color);
+                        color = ColorHelper.OleColorToHex(oleColor);
+                    }
+                    catch { }
+                }
+
+                string? backgroundColor = null;
+                if (interior.Color is not null)
+                {
+                    try
+                    {
+                        long oleColor = Convert.ToInt64(interior.Color);
+                        backgroundColor = ColorHelper.OleColorToHex(oleColor);
+                    }
+                    catch { }
+                }
+
+                string? horizontalAlignment = null;
+                if (firstCell.HorizontalAlignment is int alignVal)
+                {
+                    horizontalAlignment = alignVal switch
+                    {
+                        (int)Excel.XlHAlign.xlHAlignLeft => "Left",
+                        (int)Excel.XlHAlign.xlHAlignCenter => "Center",
+                        (int)Excel.XlHAlign.xlHAlignRight => "Right",
+                        _ => null
+                    };
+                }
+                else if (firstCell.HorizontalAlignment is not null)
+                {
+                    try
+                    {
+                        int alignInt = Convert.ToInt32(firstCell.HorizontalAlignment);
+                        horizontalAlignment = alignInt switch
+                        {
+                            (int)Excel.XlHAlign.xlHAlignLeft => "Left",
+                            (int)Excel.XlHAlign.xlHAlignCenter => "Center",
+                            (int)Excel.XlHAlign.xlHAlignRight => "Right",
+                            _ => null
+                        };
+                    }
+                    catch { }
+                }
+
+                string? verticalAlignment = null;
+                if (firstCell.VerticalAlignment is int vAlignVal)
+                {
+                    verticalAlignment = vAlignVal switch
+                    {
+                        (int)Excel.XlVAlign.xlVAlignTop => "Top",
+                        (int)Excel.XlVAlign.xlVAlignCenter => "Center",
+                        (int)Excel.XlVAlign.xlVAlignBottom => "Bottom",
+                        _ => null
+                    };
+                }
+                else if (firstCell.VerticalAlignment is not null)
+                {
+                    try
+                    {
+                        int vAlignInt = Convert.ToInt32(firstCell.VerticalAlignment);
+                        verticalAlignment = vAlignInt switch
+                        {
+                            (int)Excel.XlVAlign.xlVAlignTop => "Top",
+                            (int)Excel.XlVAlign.xlVAlignCenter => "Center",
+                            (int)Excel.XlVAlign.xlVAlignBottom => "Bottom",
+                            _ => null
+                        };
+                    }
+                    catch { }
+                }
+
+                return new CellStyle(
+                    FontName: fontName,
+                    FontSize: fontSize,
+                    Bold: bold,
+                    Italic: italic,
+                    Color: color,
+                    BackgroundColor: backgroundColor,
+                    HorizontalAlignment: horizontalAlignment,
+                    VerticalAlignment: verticalAlignment
+                );
+            }
+            finally
+            {
+                SafeReleaseComObject(interior);
+                SafeReleaseComObject(font);
+                SafeReleaseComObject(firstCell);
+                SafeReleaseComObject(cells);
+                SafeReleaseComObject(excelRange);
                 SafeReleaseComObject(ws);
                 SafeReleaseComObject(wb);
             }
