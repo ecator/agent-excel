@@ -89,16 +89,21 @@ public static class DataEndpoints
         .WithSummary("Write formula to a range");
 
         data.MapPost("/find", (FindRequest req, DataService dataService) =>
-            Results.Extensions.Yaml(new { results = dataService.Find(req.Workbook, req.Sheet, req.RangeAddress, req.What, req.MatchCase, req.WholeWord) }))
-            .WithTags("Data")
-            .WithSummary("Find all occurrences of a string");
+        {
+            var results = dataService.Find(req.Workbook, req.Sheet, req.Range, req.What, req.MatchCase, req.WholeWord);
+            var content = FormatFindResults(results, "found");
+            return Results.Text(content, "text/plain; charset=utf-8");
+        })
+        .WithTags("Data")
+        .WithSummary("Find all occurrences of a string");
 
         data.MapPost("/replace", (ReplaceRequest req, DataService dataService) =>
-            Results.Extensions.Yaml(new { success = dataService.Replace(req.Workbook, req.Sheet, req.RangeAddress, req.What, req.Replacement, req.MatchCase, req.WholeWord) }))
-            .WithTags("Data")
-            .WithSummary("Replace all occurrences of a string");
-
-
+        {
+            var count = dataService.Replace(req.Workbook, req.Sheet, req.Range, req.What, req.Replacement, req.MatchCase, req.WholeWord);
+            return Results.Text($"replaced {count} results");
+        })
+        .WithTags("Data")
+        .WithSummary("Replace all occurrences of a string");
 
         data.MapPost("/set-style", (SetStyleRequest req, DataService dataService) =>
         {
@@ -108,5 +113,43 @@ public static class DataEndpoints
         .WithTags("Data")
         .WithSummary("Set cell styles (Font, Color, Bold, Alignment, etc.)");
 
+    }
+
+    private static string FormatFindResults(List<FindResult> results, string action)
+    {
+        if (results.Count == 0)
+        {
+            return $"{action} 0 results";
+        }
+
+        var sb = new System.Text.StringBuilder();
+        var groups = results.GroupBy(r => r.Sheet);
+        int index = 0;
+        foreach (var group in groups)
+        {
+            if (index > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine();
+            }
+
+            var sheetName = group.Key;
+            var count = group.Count();
+            sb.AppendLine($"{action} {count} results in {sheetName}:");
+
+            var headers = new[] { "address", "value" };
+            var body = new string[count, 2];
+            int rIdx = 0;
+            foreach (var item in group)
+            {
+                body[rIdx, 0] = item.Address;
+                body[rIdx, 1] = item.Value;
+                rIdx++;
+            }
+            sb.Append(MarkdownTableHelper.ToMarkdownTable(headers, body));
+            index++;
+        }
+
+        return sb.ToString();
     }
 }

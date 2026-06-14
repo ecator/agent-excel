@@ -618,90 +618,199 @@ public class DataService : ExcelServiceBase
         });
     }
 
-    public List<FindResult> Find(string workbookName, string sheetName, string? rangeAddress, string what, bool matchCase, bool wholeWord)
+    public List<FindResult> Find(string workbookName, string? sheetName, string? range, string what, bool matchCase, bool wholeWord)
     {
         return ExecuteWithRetry(() =>
         {
             var results = new List<FindResult>();
             Excel.Workbook? wb = null;
-            Excel.Worksheet? ws = null;
-            Excel.Range? searchRange = null;
-            Excel.Range? firstMatch = null;
-            Excel.Range? currentMatch = null;
-
             try
             {
                 wb = GetWorkbook(workbookName);
-                ws = GetWorksheet(wb, sheetName);
-                searchRange = string.IsNullOrEmpty(rangeAddress) ? ws.UsedRange : GetRange(ws, rangeAddress);
-
-                object lookAt = wholeWord ? Excel.XlLookAt.xlWhole : Excel.XlLookAt.xlPart;
-
-                firstMatch = searchRange.Find(what, Type.Missing, Excel.XlFindLookIn.xlValues,
-                    lookAt, Excel.XlSearchOrder.xlByRows, Excel.XlSearchDirection.xlNext,
-                    matchCase, Type.Missing, Type.Missing);
-
-                if (firstMatch != null)
+                if (!string.IsNullOrEmpty(sheetName))
                 {
-                    string firstAddress = firstMatch.get_Address();
-                    currentMatch = firstMatch;
-
-                    while (currentMatch != null)
+                    Excel.Worksheet? ws = null;
+                    try
                     {
-                        results.Add(new FindResult(ws.Name, currentMatch.get_Address(), currentMatch.Value2?.ToString() ?? ""));
-
-                        Excel.Range? nextMatch = searchRange.FindNext(currentMatch);
-
-                        if (nextMatch != null && nextMatch.get_Address() == firstAddress)
+                        ws = GetWorksheet(wb, sheetName);
+                        FindInSheet(ws, range, what, matchCase, wholeWord, results);
+                    }
+                    finally
+                    {
+                        SafeReleaseComObject(ws);
+                    }
+                }
+                else
+                {
+                    Excel.Sheets? sheets = null;
+                    try
+                    {
+                        sheets = wb.Sheets;
+                        foreach (object s in sheets)
                         {
-                            SafeReleaseComObject(nextMatch);
-                            break;
+                            if (s is Excel.Worksheet worksheet)
+                            {
+                                try
+                                {
+                                    FindInSheet(worksheet, range, what, matchCase, wholeWord, results);
+                                }
+                                finally
+                                {
+                                    SafeReleaseComObject(worksheet);
+                                }
+                            }
+                            else
+                            {
+                                SafeReleaseComObject(s);
+                            }
                         }
-
-                        if (currentMatch != firstMatch)
-                        {
-                            SafeReleaseComObject(currentMatch);
-                        }
-                        currentMatch = nextMatch;
+                    }
+                    finally
+                    {
+                        SafeReleaseComObject(sheets);
                     }
                 }
                 return results;
             }
             finally
             {
-                if (currentMatch != null && currentMatch != firstMatch) SafeReleaseComObject(currentMatch);
-                SafeReleaseComObject(firstMatch);
-                SafeReleaseComObject(searchRange);
-                SafeReleaseComObject(ws);
                 SafeReleaseComObject(wb);
             }
         });
     }
 
-    public bool Replace(string workbookName, string sheetName, string? rangeAddress, string what, string replacement, bool matchCase, bool wholeWord)
+    private void FindInSheet(Excel.Worksheet ws, string? rangeAddress, string what, bool matchCase, bool wholeWord, List<FindResult> results)
+    {
+        Excel.Range? searchRange = null;
+        Excel.Range? firstMatch = null;
+        Excel.Range? currentMatch = null;
+        try
+        {
+            searchRange = string.IsNullOrEmpty(rangeAddress) ? ws.UsedRange : GetRange(ws, rangeAddress);
+            if (searchRange == null)
+            {
+                return;
+            }
+
+            object lookAt = wholeWord ? Excel.XlLookAt.xlWhole : Excel.XlLookAt.xlPart;
+
+            firstMatch = searchRange.Find(what, Type.Missing, Excel.XlFindLookIn.xlValues,
+                lookAt, Excel.XlSearchOrder.xlByRows, Excel.XlSearchDirection.xlNext,
+                matchCase, Type.Missing, Type.Missing);
+
+            if (firstMatch != null)
+            {
+                string firstAddress = firstMatch.get_Address();
+                currentMatch = firstMatch;
+
+                while (currentMatch != null)
+                {
+                    results.Add(new FindResult(ws.Name, currentMatch.get_Address(), currentMatch.Value2?.ToString() ?? ""));
+
+                    Excel.Range? nextMatch = searchRange.FindNext(currentMatch);
+
+                    if (nextMatch != null && nextMatch.get_Address() == firstAddress)
+                    {
+                        SafeReleaseComObject(nextMatch);
+                        break;
+                    }
+
+                    if (currentMatch != firstMatch)
+                    {
+                        SafeReleaseComObject(currentMatch);
+                    }
+                    currentMatch = nextMatch;
+                }
+            }
+        }
+        finally
+        {
+            if (currentMatch != null && currentMatch != firstMatch) SafeReleaseComObject(currentMatch);
+            SafeReleaseComObject(firstMatch);
+            SafeReleaseComObject(searchRange);
+        }
+    }
+
+    public int Replace(string workbookName, string? sheetName, string? range, string what, string replacement, bool matchCase, bool wholeWord)
     {
         return ExecuteWithRetry(() =>
         {
+            var findResults = Find(workbookName, sheetName, range, what, matchCase, wholeWord);
+            if (findResults.Count == 0)
+            {
+                return 0;
+            }
+
             Excel.Workbook? wb = null;
-            Excel.Worksheet? ws = null;
-            Excel.Range? searchRange = null;
             try
             {
                 wb = GetWorkbook(workbookName, createNew: true);
-                ws = GetWorksheet(wb, sheetName);
-                searchRange = string.IsNullOrEmpty(rangeAddress) ? ws.UsedRange : GetRange(ws, rangeAddress);
-
-                object lookAt = wholeWord ? Excel.XlLookAt.xlWhole : Excel.XlLookAt.xlPart;
-
-                return searchRange.Replace(what, replacement, lookAt, Excel.XlSearchOrder.xlByRows,
-                    matchCase, Type.Missing, Type.Missing, Type.Missing);
+                if (!string.IsNullOrEmpty(sheetName))
+                {
+                    Excel.Worksheet? ws = null;
+                    Excel.Range? searchRange = null;
+                    try
+                    {
+                        ws = GetWorksheet(wb, sheetName);
+                        searchRange = string.IsNullOrEmpty(range) ? ws.UsedRange : GetRange(ws, range);
+                        if (searchRange != null)
+                        {
+                            object lookAt = wholeWord ? Excel.XlLookAt.xlWhole : Excel.XlLookAt.xlPart;
+                            searchRange.Replace(what, replacement, lookAt, Excel.XlSearchOrder.xlByRows,
+                                matchCase, Type.Missing, Type.Missing, Type.Missing);
+                        }
+                    }
+                    finally
+                    {
+                        SafeReleaseComObject(searchRange);
+                        SafeReleaseComObject(ws);
+                    }
+                }
+                else
+                {
+                    Excel.Sheets? sheets = null;
+                    try
+                    {
+                        sheets = wb.Sheets;
+                        foreach (object s in sheets)
+                        {
+                            if (s is Excel.Worksheet worksheet)
+                            {
+                                Excel.Range? searchRange = null;
+                                try
+                                {
+                                    searchRange = string.IsNullOrEmpty(range) ? worksheet.UsedRange : GetRange(worksheet, range);
+                                    if (searchRange != null)
+                                    {
+                                        object lookAt = wholeWord ? Excel.XlLookAt.xlWhole : Excel.XlLookAt.xlPart;
+                                        searchRange.Replace(what, replacement, lookAt, Excel.XlSearchOrder.xlByRows,
+                                            matchCase, Type.Missing, Type.Missing, Type.Missing);
+                                    }
+                                }
+                                finally
+                                {
+                                    SafeReleaseComObject(searchRange);
+                                    SafeReleaseComObject(worksheet);
+                                }
+                            }
+                            else
+                            {
+                                SafeReleaseComObject(s);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        SafeReleaseComObject(sheets);
+                    }
+                }
             }
             finally
             {
-                SafeReleaseComObject(searchRange);
-                SafeReleaseComObject(ws);
                 SafeReleaseComObject(wb);
             }
+
+            return findResults.Count;
         });
     }
 

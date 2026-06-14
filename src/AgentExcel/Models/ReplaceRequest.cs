@@ -3,12 +3,17 @@ namespace AgentExcel.Models;
 /// <summary>
 /// Request for replacing text inside a worksheet or range.
 /// </summary>
-public record ReplaceRequest : WorksheetRequestBase
+public record ReplaceRequest : WorkbookRequestBase
 {
     /// <summary>
-    /// Optional specific range to replace within. If null, replaces across the entire sheet.
+    /// Optional target worksheet name (e.g., 'Sheet1'). If null, searches the entire workbook.
     /// </summary>
-    public string? RangeAddress { get; init; }
+    public string? Sheet { get; init; }
+
+    /// <summary>
+    /// Optional specific range to replace within. If null, replaces across the entire sheet/workbook.
+    /// </summary>
+    public string? Range { get; init; }
 
     /// <summary>
     /// The text string to search for.
