@@ -36,17 +36,15 @@ public static class SystemEndpoints
         {
             systemService.Shutdown();
             lifetime.StopApplication();
-            return Results.Extensions.Yaml(new { status = "shutting_down" });
+            return Results.Text("stopped");
         })
         .WithTags("System")
         .WithOpenApi(operation => { operation.Summary = "Shutdown the daemon server"; return operation; });
 
-        var system = app.MapGroup("/system").WithOpenApi();
-
-        system.MapPost("/calculate", (SystemService systemService) =>
+        app.MapPost("/calculate", (SystemService systemService) =>
         {
             systemService.Calculate();
-            return Results.Extensions.Yaml(new { status = "calculated" });
+            return Results.Text("calculated");
         })
         .WithTags("System")
         .WithSummary("Trigger a global calculation");
