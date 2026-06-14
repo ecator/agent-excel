@@ -7,8 +7,8 @@ description: 'Generating conventional commit messages'
 
 **Follow these steps:**
 
-1. Run `git status` to review changed files.
-2. Run `git diff` or `git diff --cached` to inspect changes.
+1. Run `git -c color.status=false --no-pager status -s` to review changed files.
+2. Run `git --no-pager diff --staged --no-color` to inspect changes.
 3. Construct your commit message using the following structure.
 
 **DO NOT RUN `git commit`**, you only print the commit message in a markdown code block unless the user explicitly requests you to run `git commit`.
