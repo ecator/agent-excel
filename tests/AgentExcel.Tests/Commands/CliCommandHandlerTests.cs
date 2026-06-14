@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -36,13 +37,14 @@ public class CliCommandHandlerTests : BaseTests
         var command = "get";
         string[] args = ["get"];
         using var outputWriter = new StringWriter();
+        string exeName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "AgentExcel.exe");
 
         // Act
         await CliCommandHandler.ExecuteApiRequest(command, args, "127.0.0.1", null, null, outputWriter, 8080);
 
         // Assert
         string output = outputWriter.ToString();
-        Assert.That(output, Does.Contain("Usage: AgentExcel get <endpoint>"));
+        Assert.That(output, Does.Contain($"Usage: {exeName} get <endpoint>"));
     }
 
     [Test]
@@ -52,13 +54,14 @@ public class CliCommandHandlerTests : BaseTests
         var command = "get";
         string[] args = ["get", "/status"];
         using var outputWriter = new StringWriter();
+        string exeName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "AgentExcel.exe");
 
         // Act
         await CliCommandHandler.ExecuteApiRequest(command, args, "127.0.0.1", null, null, outputWriter, null);
 
         // Assert
         string output = outputWriter.ToString();
-        Assert.That(output, Does.Contain("Error: Daemon server is not running. Please start the server first by running 'AgentExcel start'."));
+        Assert.That(output, Does.Contain($"Error: Daemon server is not running. Please start the server first by running '{exeName} start'."));
     }
 
     [Test]
@@ -241,6 +244,7 @@ public class CliCommandHandlerTests : BaseTests
         using var outputWriter = new StringWriter();
         var handler = new FakeHttpMessageHandler();
         using var client = new HttpClient(handler);
+        string exeName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "AgentExcel.exe");
 
         handler.HandlerFunc = (req) =>
         {
@@ -252,6 +256,6 @@ public class CliCommandHandlerTests : BaseTests
 
         // Assert
         string output = outputWriter.ToString();
-        Assert.That(output, Does.Contain("Error: Daemon server is not running. Please start the server first by running 'AgentExcel start'."));
+        Assert.That(output, Does.Contain($"Error: Daemon server is not running. Please start the server first by running '{exeName} start'."));
     }
 }
