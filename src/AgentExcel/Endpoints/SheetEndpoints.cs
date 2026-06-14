@@ -19,18 +19,18 @@ public static class SheetEndpoints
             .WithTags("Sheets")
             .WithSummary("List sheets in a workbook");
 
-        sheets.MapPost("/add", (SheetRequest req, SheetService sheetService) =>
+        sheets.MapPost("/add", (WorksheetRequest req, SheetService sheetService) =>
         {
-            sheetService.AddSheet(req.Workbook, req.Name);
-            return Results.Extensions.Yaml(new { status = "added" });
+            sheetService.AddSheet(req.Workbook, req.Sheet);
+            return Results.Text("added");
         })
         .WithTags("Sheets")
         .WithSummary("Add a new sheet");
 
-        sheets.MapPost("/delete", (SheetRequest req, SheetService sheetService) =>
+        sheets.MapPost("/delete", (WorksheetRequest req, SheetService sheetService) =>
         {
-            sheetService.DeleteSheet(req.Workbook, req.Name);
-            return Results.Extensions.Yaml(new { status = "deleted" });
+            sheetService.DeleteSheet(req.Workbook, req.Sheet);
+            return Results.Text("deleted");
         })
         .WithTags("Sheets")
         .WithSummary("Delete a sheet");
@@ -38,9 +38,25 @@ public static class SheetEndpoints
         sheets.MapPost("/rename", (RenameSheetRequest req, SheetService sheetService) =>
         {
             sheetService.RenameSheet(req.Workbook, req.OldName, req.NewName);
-            return Results.Extensions.Yaml(new { status = "renamed" });
+            return Results.Text("renamed");
         })
         .WithTags("Sheets")
         .WithSummary("Rename a sheet");
+
+        sheets.MapPost("/copy", (CopySheetRequest req, SheetService sheetService) =>
+        {
+            sheetService.CopySheet(req.Workbook, req.OldName, req.NewName, req.TargetWorkbook, req.Position);
+            return Results.Text("copied");
+        })
+        .WithTags("Sheets")
+        .WithSummary("Copy a sheet to the target workbook. If target workbook is omitted, the source workbook is used. Position 0 for first, -1 for last.");
+
+        sheets.MapPost("/move", (MoveSheetRequest req, SheetService sheetService) =>
+        {
+            sheetService.MoveSheet(req.Workbook, req.Sheet, req.TargetWorkbook, req.Position);
+            return Results.Text("moved");
+        })
+        .WithTags("Sheets")
+        .WithSummary("Move a sheet to the target workbook. If target workbook is omitted, the source workbook is used. Position 0 for first, -1 for last.");
     }
 }
