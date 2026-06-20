@@ -73,4 +73,64 @@ public class ExceptionHandlingMiddlewareTests : BaseTests
         string output = await reader.ReadToEndAsync();
         Assert.That(output, Is.EqualTo(errorMessage));
     }
+
+    [Test]
+    public async Task InvokeAsync_WhenBadHttpRequestExceptionThrown_Returns400AndErrorMessageAsPlainText()
+    {
+        // Arrange
+        var context = new DefaultHttpContext();
+        using var responseStream = new MemoryStream();
+        context.Response.Body = responseStream;
+
+        const string errorMessage = "Failed to read parameter \"req\" from the request body as JSON.";
+        RequestDelegate next = (ctx) =>
+        {
+            throw new BadHttpRequestException(errorMessage, StatusCodes.Status400BadRequest);
+        };
+
+        var middleware = new ExceptionHandlingMiddleware(next, NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        Assert.That(context.Response.StatusCode, Is.EqualTo(400));
+        Assert.That(context.Response.ContentType, Is.EqualTo("text/plain; charset=utf-8"));
+
+        responseStream.Position = 0;
+        using var reader = new StreamReader(responseStream, Encoding.UTF8);
+        string output = await reader.ReadToEndAsync();
+        Assert.That(output, Is.EqualTo(errorMessage));
+    }
+
+    [Test]
+    public async Task InvokeAsync_WhenBadHttpRequestExceptionWithInnerExceptionThrown_Returns400AndErrorMessageWithDetails()
+    {
+        // Arrange
+        var context = new DefaultHttpContext();
+        using var responseStream = new MemoryStream();
+        context.Response.Body = responseStream;
+
+        const string errorMessage = "Failed to read parameter \"req\" from the request body as JSON.";
+        const string detailMessage = "The JSON value could not be converted to System.String. Path: $.sheetName | LineNumber: 2 | BytePositionInLine: 24.";
+        RequestDelegate next = (ctx) =>
+        {
+            var innerEx = new System.Text.Json.JsonException(detailMessage);
+            throw new BadHttpRequestException(errorMessage, StatusCodes.Status400BadRequest, innerEx);
+        };
+
+        var middleware = new ExceptionHandlingMiddleware(next, NullLogger<ExceptionHandlingMiddleware>.Instance);
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        Assert.That(context.Response.StatusCode, Is.EqualTo(400));
+        Assert.That(context.Response.ContentType, Is.EqualTo("text/plain; charset=utf-8"));
+
+        responseStream.Position = 0;
+        using var reader = new StreamReader(responseStream, Encoding.UTF8);
+        string output = await reader.ReadToEndAsync();
+        Assert.That(output, Is.EqualTo($"{errorMessage} Details: {detailMessage}"));
+    }
 }

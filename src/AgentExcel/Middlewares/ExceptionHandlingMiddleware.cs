@@ -29,6 +29,20 @@ public class ExceptionHandlingMiddleware
         {
             await _next(context);
         }
+        catch (BadHttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "A bad HTTP request occurred: {Message}", ex.Message);
+
+            context.Response.StatusCode = ex.StatusCode;
+            context.Response.ContentType = "text/plain; charset=utf-8";
+
+            var message = ex.Message;
+            if (ex.InnerException is not null)
+            {
+                message = $"{message} Details: {ex.InnerException.Message}";
+            }
+            await context.Response.WriteAsync(message);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled exception occurred: {Message}", ex.Message);

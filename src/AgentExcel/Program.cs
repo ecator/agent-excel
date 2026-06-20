@@ -89,6 +89,11 @@ class Program
 
         var builder = WebApplication.CreateBuilder();
 
+        builder.Services.Configure<Microsoft.AspNetCore.Routing.RouteHandlerOptions>(o =>
+        {
+            o.ThrowOnBadRequest = true;
+        });
+
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
