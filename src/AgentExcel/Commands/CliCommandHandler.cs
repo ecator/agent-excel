@@ -31,7 +31,7 @@ public static class CliCommandHandler
             CreateNoWindow = true,
             WindowStyle = ProcessWindowStyle.Hidden
         };
-        var exeName  = AppInfoHelper.GetExeName();
+        var exeName = AppInfoHelper.GetExeName();
         Process.Start(startInfo);
         Console.WriteLine($"Server started at http://{listenHost}:{finalPort}");
         Console.WriteLine($"Swagger UI available at http://{listenHost}:{finalPort}/swagger/index.html");

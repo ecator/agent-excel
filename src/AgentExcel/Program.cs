@@ -126,7 +126,7 @@ class Program
         app.MapSystemEndpoints(port, ListenHost);
         app.MapWorkbookEndpoints();
         app.MapSheetEndpoints();
-        app.MapDataEndpoints();
+        app.MapRangeEndpoints();
         app.MapShapeEndpoints();
         app.MapChartEndpoints();
         app.MapExportEndpoints();

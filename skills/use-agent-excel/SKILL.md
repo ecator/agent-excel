@@ -72,13 +72,13 @@ The `api` command supports two-level filtering (group and endpoint name) with wi
 
 *   **Summary mode**: If no `endpoint` parameter is specified, it shows only the group names and the endpoint paths with their summary descriptions (excluding detailed body schemas):
     *   `AgentExcel.exe api`: Lists all groups and endpoints' summaries.
-    *   `AgentExcel.exe api data`: Lists summaries only for endpoints in the `data` group.
+    *   `AgentExcel.exe api range`: Lists summaries only for endpoints in the `range` group.
     *   `AgentExcel.exe api *`: Lists summaries for all endpoints across all groups.
 *   **Detailed mode**: If an `endpoint` parameter is specified, it prints the detailed documentation including the request body JSON schema:
-    *   `AgentExcel.exe api data /data/write-range`: Shows the detailed documentation for the `/data/write-range` endpoint (exact/suffix match).
-    *   `AgentExcel.exe api data write-range`: Shows the detailed documentation by matching the endpoint name without a leading slash (matches paths ending with `/write-range`, such as `/data/write-range`). **Note**: The matched endpoint path must belong to the specified group (in this case, `data`).
-    *   `AgentExcel.exe api data *range*`: Shows the detailed documentation for endpoints in the `data` group whose paths contain `range`.
-    *   `AgentExcel.exe api data *`: Shows details for all endpoints in the `data` group.
+    *   `AgentExcel.exe api range /range/write`: Shows the detailed documentation for the `/range/write` endpoint (exact/suffix match).
+    *   `AgentExcel.exe api range write`: Shows the detailed documentation by matching the endpoint name without a leading slash (matches paths ending with `/write`, such as `/range/write`). **Note**: The matched endpoint path must belong to the specified group (in this case, `range`).
+    *   `AgentExcel.exe api range *write*`: Shows the detailed documentation for endpoints in the `range` group whose paths contain `write`.
+    *   `AgentExcel.exe api range *`: Shows details for all endpoints in the `range` group.
     *   `AgentExcel.exe api * *`: Shows details for all endpoints across all groups.
 
 Note: Filtering is entirely case-insensitive.

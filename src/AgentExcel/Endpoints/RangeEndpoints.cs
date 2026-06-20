@@ -8,141 +8,141 @@ using Microsoft.AspNetCore.Routing;
 
 namespace AgentExcel.Endpoints;
 
-public static class DataEndpoints
+public static class RangeEndpoints
 {
-    public static void MapDataEndpoints(this IEndpointRouteBuilder app)
+    public static void MapRangeEndpoints(this IEndpointRouteBuilder app)
     {
-        var data = app.MapGroup("/data").WithOpenApi();
+        var range = app.MapGroup("/range").WithOpenApi();
 
-        data.MapPost("/read-range", (ReadRangeRequest req, DataService dataService) =>
+        range.MapPost("/read", (ReadRangeRequest req, DataService dataService) =>
         {
             var results = dataService.ReadRange(req.Workbook, req.Sheet, req.Range);
             return results.Count > 0 ? Results.Extensions.Yaml(results) : Results.Extensions.Yaml(null);
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Read data from a range");
 
-        data.MapPost("/write-range", (RangeWriteRequest req, DataService dataService) =>
+        range.MapPost("/write", (RangeWriteRequest req, DataService dataService) =>
         {
             dataService.WriteRange(req.Workbook, req.Sheet, req.Range, req.Value);
             return Results.Text($"range[{req.Range}] has be filled with data");
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Write data to a range");
 
-        data.MapPost("/list-tables", (ListTablesRequest req, DataService dataService) =>
+        range.MapPost("/list-tables", (ListTablesRequest req, DataService dataService) =>
         {
             var results = dataService.ListTables(req.Workbook, req.Sheet).Select(i => new { Sheet = i.Key, Tables = i.Value });
             return results.Count() > 0 ? Results.Extensions.Yaml(results) : Results.Extensions.Yaml(null);
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("List all Excel Tables in the workbook or a specific sheet");
 
 
-        data.MapPost("/read-table", (ReadTableRequest req, DataService dataService) =>
+        range.MapPost("/read-table", (ReadTableRequest req, DataService dataService) =>
         {
             var content = dataService.ReadTableAsMarkdown(req.Workbook, req.Sheet, req.Table);
             return Results.Text(content, "text/plain; charset=utf-8");
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Read data from an Excel Table (ListObject) in Markdown format");
 
-        data.MapPost("/rename-table", (RenameTableRequest req, DataService dataService) =>
+        range.MapPost("/rename-table", (RenameTableRequest req, DataService dataService) =>
         {
             dataService.RenameTable(req.Workbook, req.Sheet, req.Table, req.NewName);
             return Results.Text($"{req.Table} has renamed to {req.NewName}");
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Rename an Excel Table (ListObject)");
 
-        data.MapPost("/convert-to-table", (ConvertToTableRequest req, DataService dataService) =>
+        range.MapPost("/convert-to-table", (ConvertToTableRequest req, DataService dataService) =>
         {
             var tableName = dataService.ConvertToTable(req.Workbook, req.Sheet, req.Range, req.Table, req.HasHeaders);
             return Results.Text($"range[{req.Range}] has converted to table[{tableName}]");
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Convert a normal range to an Excel Table");
 
-        data.MapPost("/convert-to-range", (ConvertToRangeRequest req, DataService dataService) =>
+        range.MapPost("/convert-to-range", (ConvertToRangeRequest req, DataService dataService) =>
         {
             var address = dataService.ConvertToRange(req.Workbook, req.Sheet, req.Table);
             return Results.Text($"table[{req.Table}] has converted to  range[{address}]");
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Convert an Excel Table back to a normal range");
 
 
-        data.MapPost("/read-formula", (ReadRangeRequest req, DataService dataService) =>
+        range.MapPost("/read-formula", (ReadRangeRequest req, DataService dataService) =>
         {
             var results = dataService.ReadFormula(req.Workbook, req.Sheet, req.Range);
             return results.Count > 0 ? Results.Extensions.Yaml(results) : Results.Extensions.Yaml(null);
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Read the formula from a range");
 
-        data.MapPost("/write-formula", (WriteFormulaRequest req, DataService dataService) =>
+        range.MapPost("/write-formula", (WriteFormulaRequest req, DataService dataService) =>
         {
             dataService.WriteFormula(req.Workbook, req.Sheet, req.Range, req.Formula);
             return Results.Text($"range[{req.Range}] has be filled with formula");
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Write formula to a range");
 
-        data.MapPost("/find", (FindRequest req, DataService dataService) =>
+        range.MapPost("/find", (FindRequest req, DataService dataService) =>
         {
             var results = dataService.Find(req.Workbook, req.Sheet, req.Range, req.What, req.MatchCase, req.WholeWord);
             var content = FormatFindResults(results, "found");
             return Results.Text(content, "text/plain; charset=utf-8");
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Find all occurrences of a string");
 
-        data.MapPost("/replace", (ReplaceRequest req, DataService dataService) =>
+        range.MapPost("/replace", (ReplaceRequest req, DataService dataService) =>
         {
             var count = dataService.Replace(req.Workbook, req.Sheet, req.Range, req.What, req.Replacement, req.MatchCase, req.WholeWord);
             return Results.Text($"replaced {count} results");
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Replace all occurrences of a string");
 
-        data.MapPost("/get-style", (ReadRangeRequest req, DataService dataService) =>
+        range.MapPost("/get-style", (ReadRangeRequest req, DataService dataService) =>
         {
             var result = dataService.GetStyle(req.Workbook, req.Sheet, req.Range);
             return Results.Extensions.Yaml(result);
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Get cell style. Note: only supports returning the style of the top-left (first) cell of the range.");
 
-        data.MapPost("/set-style", (SetStyleRequest req, DataService dataService) =>
+        range.MapPost("/set-style", (SetStyleRequest req, DataService dataService) =>
         {
             dataService.SetStyle(req.Workbook, req.Sheet, req.Range, req.Style);
             return Results.Text($"style of range[{req.Range}] has changed");
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Set cell styles (Font, Color, Bold, Alignment, etc.)");
 
-        data.MapPost("/clear", (ClearRequest req, DataService dataService) =>
+        range.MapPost("/clear", (ClearRequest req, DataService dataService) =>
         {
             var address = dataService.Clear(req.Workbook, req.Sheet, req.Range, req.Type);
             return Results.Text($"range[{address}] has been cleared");
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Clear range (All, Formats, Contents, Comments, Hyperlinks)");
 
-        data.MapPost("/get-selection", (WorksheetRequest req, DataService dataService) =>
+        range.MapPost("/get-selection", (WorksheetRequest req, DataService dataService) =>
         {
             var address = dataService.GetSelection(req.Workbook, req.Sheet);
             return Results.Text(address);
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Get selection address of a specific sheet");
 
-        data.MapPost("/set-selection", (SetSelectionRequest req, DataService dataService) =>
+        range.MapPost("/set-selection", (SetSelectionRequest req, DataService dataService) =>
         {
             var address = dataService.SetSelection(req.Workbook, req.Sheet, req.Range);
             return Results.Text($"selection of sheet[{req.Sheet}] has been set to range[{address}]");
         })
-        .WithTags("Data")
+        .WithTags("Range")
         .WithSummary("Set selection of a specific sheet and activate the range");
 
     }

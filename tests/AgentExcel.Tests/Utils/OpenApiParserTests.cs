@@ -14,15 +14,15 @@ public class OpenApiParserTests : BaseTests
     private const string MockSwaggerJson = @"{
   ""openapi"": ""3.0.1"",
   ""paths"": {
-    ""/data/read"": {
+    ""/range/read"": {
       ""get"": {
-        ""tags"": [""Data""],
+        ""tags"": [""Range""],
         ""summary"": ""Read range data""
       }
     },
-    ""/data/write-range"": {
+    ""/range/write"": {
       ""post"": {
-        ""tags"": [""Data""],
+        ""tags"": [""Range""],
         ""summary"": ""Write data to range"",
         ""requestBody"": {
           ""content"": {
@@ -68,16 +68,16 @@ public class OpenApiParserTests : BaseTests
         Assert.That(catalog.Endpoints, Has.Count.EqualTo(3));
         Assert.That(catalog.Schemas, Has.Count.EqualTo(1));
 
-        var readEp = catalog.Endpoints.FirstOrDefault(e => e.Path == "/data/read");
+        var readEp = catalog.Endpoints.FirstOrDefault(e => e.Path == "/range/read");
         Assert.That(readEp, Is.Not.Null);
-        Assert.That(readEp!.Tag, Is.EqualTo("Data"));
+        Assert.That(readEp!.Tag, Is.EqualTo("Range"));
         Assert.That(readEp.Method, Is.EqualTo("GET"));
         Assert.That(readEp.Summary, Is.EqualTo("Read range data"));
         Assert.That(readEp.RequestSchema, Is.Null);
 
-        var writeEp = catalog.Endpoints.FirstOrDefault(e => e.Path == "/data/write-range");
+        var writeEp = catalog.Endpoints.FirstOrDefault(e => e.Path == "/range/write");
         Assert.That(writeEp, Is.Not.Null);
-        Assert.That(writeEp!.Tag, Is.EqualTo("Data"));
+        Assert.That(writeEp!.Tag, Is.EqualTo("Range"));
         Assert.That(writeEp.Method, Is.EqualTo("POST"));
         Assert.That(writeEp.RequestSchema, Is.Not.Null);
     }
@@ -95,9 +95,9 @@ public class OpenApiParserTests : BaseTests
         // Assert
         Assert.That(output, Does.Contain("=== Charts ==="));
         Assert.That(output, Does.Contain("[GET] /charts/list - List all charts"));
-        Assert.That(output, Does.Contain("=== Data ==="));
-        Assert.That(output, Does.Contain("[GET] /data/read - Read range data"));
-        Assert.That(output, Does.Contain("[POST] /data/write-range - Write data to range"));
+        Assert.That(output, Does.Contain("=== Range ==="));
+        Assert.That(output, Does.Contain("[GET] /range/read - Read range data"));
+        Assert.That(output, Does.Contain("[POST] /range/write - Write data to range"));
         Assert.That(output, Does.Not.Contain("Body:"));
         Assert.That(output, Does.Not.Contain("\"range\":"));
     }
@@ -107,16 +107,16 @@ public class OpenApiParserTests : BaseTests
     {
         // Arrange
         using var catalog = OpenApiParser.Parse(MockSwaggerJson);
-        string[] args = ["api", "data"];
+        string[] args = ["api", "range"];
 
         // Act
         string output = OpenApiParser.FormatCatalog(catalog, args);
 
         // Assert
         Assert.That(output, Does.Not.Contain("=== Charts ==="));
-        Assert.That(output, Does.Contain("=== Data ==="));
-        Assert.That(output, Does.Contain("[GET] /data/read - Read range data"));
-        Assert.That(output, Does.Contain("[POST] /data/write-range - Write data to range"));
+        Assert.That(output, Does.Contain("=== Range ==="));
+        Assert.That(output, Does.Contain("[GET] /range/read - Read range data"));
+        Assert.That(output, Does.Contain("[POST] /range/write - Write data to range"));
         Assert.That(output, Does.Not.Contain("Body:"));
     }
 
@@ -125,16 +125,16 @@ public class OpenApiParserTests : BaseTests
     {
         // Arrange
         using var catalog = OpenApiParser.Parse(MockSwaggerJson);
-        string[] args = ["api", "data", "*range*"];
+        string[] args = ["api", "range", "*write*"];
 
         // Act
         string output = OpenApiParser.FormatCatalog(catalog, args);
 
         // Assert
         Assert.That(output, Does.Not.Contain("=== Charts ==="));
-        Assert.That(output, Does.Not.Contain("[GET] /data/read"));
-        Assert.That(output, Does.Contain("=== Data ==="));
-        Assert.That(output, Does.Contain("[POST] /data/write-range - Write data to range"));
+        Assert.That(output, Does.Not.Contain("[GET] /range/read"));
+        Assert.That(output, Does.Contain("=== Range ==="));
+        Assert.That(output, Does.Contain("[POST] /range/write - Write data to range"));
         Assert.That(output, Does.Contain("  Body:"));
         Assert.That(output, Does.Contain("\"range\": \"string\" // (required) The range coordinate"));
     }
@@ -144,16 +144,16 @@ public class OpenApiParserTests : BaseTests
     {
         // Arrange
         using var catalog = OpenApiParser.Parse(MockSwaggerJson);
-        string[] args = ["api", "data", "/data/write-range"];
+        string[] args = ["api", "range", "/range/write"];
 
         // Act
         string output = OpenApiParser.FormatCatalog(catalog, args);
 
         // Assert
         Assert.That(output, Does.Not.Contain("=== Charts ==="));
-        Assert.That(output, Does.Not.Contain("[GET] /data/read"));
-        Assert.That(output, Does.Contain("=== Data ==="));
-        Assert.That(output, Does.Contain("[POST] /data/write-range - Write data to range"));
+        Assert.That(output, Does.Not.Contain("[GET] /range/read"));
+        Assert.That(output, Does.Contain("=== Range ==="));
+        Assert.That(output, Does.Contain("[POST] /range/write - Write data to range"));
         Assert.That(output, Does.Contain("  Body:"));
         Assert.That(output, Does.Contain("\"range\": \"string\" // (required) The range coordinate"));
     }
@@ -163,16 +163,16 @@ public class OpenApiParserTests : BaseTests
     {
         // Arrange
         using var catalog = OpenApiParser.Parse(MockSwaggerJson);
-        string[] args = ["api", "data", "*"];
+        string[] args = ["api", "range", "*"];
 
         // Act
         string output = OpenApiParser.FormatCatalog(catalog, args);
 
         // Assert
         Assert.That(output, Does.Not.Contain("=== Charts ==="));
-        Assert.That(output, Does.Contain("=== Data ==="));
-        Assert.That(output, Does.Contain("[GET] /data/read"));
-        Assert.That(output, Does.Contain("[POST] /data/write-range"));
+        Assert.That(output, Does.Contain("=== Range ==="));
+        Assert.That(output, Does.Contain("[GET] /range/read"));
+        Assert.That(output, Does.Contain("[POST] /range/write"));
         Assert.That(output, Does.Contain("  Body:"));
     }
 
@@ -188,9 +188,9 @@ public class OpenApiParserTests : BaseTests
 
         // Assert
         Assert.That(output, Does.Contain("=== Charts ==="));
-        Assert.That(output, Does.Contain("=== Data ==="));
-        Assert.That(output, Does.Contain("[GET] /data/read"));
-        Assert.That(output, Does.Contain("[POST] /data/write-range"));
+        Assert.That(output, Does.Contain("=== Range ==="));
+        Assert.That(output, Does.Contain("[GET] /range/read"));
+        Assert.That(output, Does.Contain("[POST] /range/write"));
         Assert.That(output, Does.Contain("  Body:"));
     }
 
@@ -199,14 +199,14 @@ public class OpenApiParserTests : BaseTests
     {
         // Arrange
         using var catalog = OpenApiParser.Parse(MockSwaggerJson);
-        string[] args = ["api", "DATA", "*RANGE*"];
+        string[] args = ["api", "RANGE", "*WRITE*"];
 
         // Act
         string output = OpenApiParser.FormatCatalog(catalog, args);
 
         // Assert
-        Assert.That(output, Does.Contain("=== Data ==="));
-        Assert.That(output, Does.Contain("[POST] /data/write-range - Write data to range"));
+        Assert.That(output, Does.Contain("=== Range ==="));
+        Assert.That(output, Does.Contain("[POST] /range/write - Write data to range"));
         Assert.That(output, Does.Contain("  Body:"));
     }
 
@@ -215,13 +215,13 @@ public class OpenApiParserTests : BaseTests
     {
         // Arrange
         using var catalog = OpenApiParser.Parse(MockSwaggerJson);
-        string[] args = ["api", "da*"];
+        string[] args = ["api", "ra*"];
 
         // Act
         string output = OpenApiParser.FormatCatalog(catalog, args);
 
         // Assert
-        Assert.That(output, Does.Contain("=== Data ==="));
+        Assert.That(output, Does.Contain("=== Range ==="));
         Assert.That(output, Does.Not.Contain("  Body:"));
     }
 }

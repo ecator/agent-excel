@@ -432,7 +432,7 @@ internal static class OpenApiParser
             return true;
         }
 
-        // Also support matching endpoint name without slash (e.g. "write" matching "/data/write" or "/write")
+        // Also support matching endpoint name without slash (e.g. "write" matching "/range/write" or "/write")
         if (!filter.StartsWith("/"))
         {
             if (path.EndsWith("/" + filter, StringComparison.OrdinalIgnoreCase))
