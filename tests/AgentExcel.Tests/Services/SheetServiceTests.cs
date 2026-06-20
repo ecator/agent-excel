@@ -20,7 +20,7 @@ public class SheetServiceTests : BaseTests
 #pragma warning disable NUnit1032
     private static ExcelConnectionProvider? s_provider;
 #pragma warning restore NUnit1032
-    private SheetService? _service;
+    private SheetService _service = null!;
 
     private List<string> HelperListSheetNames(string wbName)
     {

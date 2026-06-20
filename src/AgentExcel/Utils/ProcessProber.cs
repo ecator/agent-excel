@@ -18,8 +18,8 @@ internal class ProcessProber
         int currentPid = Process.GetCurrentProcess().Id;
 
         // Find all background processes with the same name, excluding the current CLI process itself
-        Process backgroundProcess = Process.GetProcessesByName(currentName)
-                                           .FirstOrDefault(p => p.Id != currentPid);
+        Process? backgroundProcess = Process.GetProcessesByName(currentName)
+                                            .FirstOrDefault(p => p.Id != currentPid);
 
         if (backgroundProcess == null) return null;
 
@@ -44,7 +44,8 @@ internal class ProcessProber
                 CreateNoWindow = true
             };
 
-            using Process p = Process.Start(psi);
+            using Process? p = Process.Start(psi);
+            if (p is null) return null;
             string output = p.StandardOutput.ReadToEnd();
             p.WaitForExit();
 
