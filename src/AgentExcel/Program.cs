@@ -7,6 +7,7 @@ using AgentExcel.Endpoints;
 using AgentExcel.Middlewares;
 using AgentExcel.Providers;
 using AgentExcel.Services;
+using AgentExcel.Utils;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,12 +48,7 @@ class Program
             }
             else if (command == "version")
             {
-                var version = Assembly.GetExecutingAssembly()
-                    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
-                    .InformationalVersion
-                    ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
-                    ?? "unknown";
-                Console.WriteLine(version);
+                Console.WriteLine(AppInfoHelper.GetAppVersion());
                 return;
             }
             else if (command == "get" || command == "post")
@@ -73,7 +69,7 @@ class Program
             }
         }
 
-        var exeName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "AgentExcel.exe");
+        var exeName = AppInfoHelper.GetExeName();
         Console.WriteLine("AgentExcel - AI Power for Excel");
         Console.WriteLine("Usage:");
         Console.WriteLine($"  {exeName} start                     (Start daemon)");

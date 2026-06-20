@@ -144,7 +144,7 @@ public static class CliCommandHandler
         System.IO.TextWriter? outputWriter = null,
         int? overridePort = null)
     {
-        var exeName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "AgentExcel.exe");
+        var exeName = AppInfoHelper.GetExeName();
         var outWriter = outputWriter ?? Console.Out;
         if (args.Length < 2)
         {
@@ -157,7 +157,8 @@ public static class CliCommandHandler
         {
             endpoint = "/" + endpoint;
         }
-        if (endpoint.EndsWith("/")){
+        if (endpoint.EndsWith("/"))
+        {
             endpoint = endpoint.TrimEnd('/');
         }
 
@@ -232,7 +233,7 @@ public static class CliCommandHandler
         System.IO.TextWriter? outputWriter = null,
         int? overridePort = null)
     {
-        var exeName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "AgentExcel.exe");
+        var exeName = AppInfoHelper.GetExeName();
         var outWriter = outputWriter ?? Console.Out;
 
         int? port = overridePort ?? ProcessProber.FindRunningServerPort();
