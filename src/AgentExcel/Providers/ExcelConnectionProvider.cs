@@ -92,35 +92,52 @@ public class ExcelConnectionProvider : IExcelConnectionProvider
     /// </summary>
     public void Dispose()
     {
-        if (_disposed)
+        lock (_lock)
         {
-            return;
+            if (_disposed)
+            {
+                return;
+            }
+            _disposed = true;
         }
 
         Excel.Application? app = _app;
         if (app != null)
         {
-            // Retrieve the Workbooks collection to check if Excel can be closed safely
-            Excel.Workbooks wbs = app.Workbooks;
-            if (wbs.Count == 0)
+            Excel.Workbooks? wbs = null;
+            try
             {
-                try
+                // Retrieve the Workbooks collection to check if Excel can be closed safely
+                wbs = app.Workbooks;
+                if (wbs.Count == 0)
                 {
-                    // Only quit if there are no workbooks open to avoid disrupting the user's active session
-                    app.Quit();
-                }
-                catch
-                {
-                    // Ignore exceptions on quit
+                    try
+                    {
+                        // Only quit if there are no workbooks open to avoid disrupting the user's active session
+                        app.Quit();
+                    }
+                    catch
+                    {
+                        // Ignore exceptions on quit
+                    }
                 }
             }
-            // Explicitly release COM objects in reverse order of creation
-            SafeReleaseComObject(wbs);
-            SafeReleaseComObject(app);
-            _app = null;
+            catch
+            {
+                // Ignore exceptions during workbook count check or edit modes
+            }
+            finally
+            {
+                // Explicitly release COM objects in reverse order of creation
+                if (wbs != null)
+                {
+                    SafeReleaseComObject(wbs);
+                }
+                SafeReleaseComObject(app);
+                _app = null;
+            }
         }
 
-        _disposed = true;
         GC.SuppressFinalize(this);
     }
 

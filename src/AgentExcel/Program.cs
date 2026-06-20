@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 using AgentExcel.Commands;
 using AgentExcel.Endpoints;
@@ -137,6 +138,53 @@ class Program
         app.MapMacroEndpoints();
         app.MapValidationEndpoints();
 
+        // Retrieve connection provider and register system shutdown handler
+        var connectionProvider = app.Services.GetRequiredService<IExcelConnectionProvider>();
+        RegisterConsoleCtrlHandler(connectionProvider);
+
         app.Run($"http://{ListenHost}:{port}");
+    }
+
+    private static ConsoleCtrlDelegate? s_consoleCtrlHandler;
+
+    [DllImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetConsoleCtrlHandler(ConsoleCtrlDelegate handler, [MarshalAs(UnmanagedType.Bool)] bool add);
+
+    private delegate bool ConsoleCtrlDelegate(CtrlType sig);
+
+    private enum CtrlType
+    {
+        CTRL_C_EVENT = 0,
+        CTRL_BREAK_EVENT = 1,
+        CTRL_CLOSE_EVENT = 2,
+        CTRL_LOGOFF_EVENT = 5,
+        CTRL_SHUTDOWN_EVENT = 6
+    }
+
+    private static void RegisterConsoleCtrlHandler(IExcelConnectionProvider provider)
+    {
+        s_consoleCtrlHandler = (sig) =>
+        {
+            switch (sig)
+            {
+                case CtrlType.CTRL_C_EVENT:
+                case CtrlType.CTRL_CLOSE_EVENT:
+                case CtrlType.CTRL_LOGOFF_EVENT:
+                case CtrlType.CTRL_SHUTDOWN_EVENT:
+                    try
+                    {
+                        provider.Dispose();
+                    }
+                    catch
+                    {
+                        // Ignore exceptions during cleanup
+                    }
+                    break;
+            }
+            return false;
+        };
+
+        SetConsoleCtrlHandler(s_consoleCtrlHandler, true);
     }
 }
