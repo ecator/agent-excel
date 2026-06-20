@@ -58,7 +58,7 @@ class Program
             }
             else if (command == "api")
             {
-                await CliCommandHandler.ShowApiCatalog(ListenHost);
+                await CliCommandHandler.ShowApiCatalog(ListenHost, args);
                 return;
             }
             else if (command == "--run-server")
@@ -76,7 +76,7 @@ class Program
         Console.WriteLine($"  {exeName} stop                      (Stop daemon)");
         Console.WriteLine($"  {exeName} status                    (Show status)");
         Console.WriteLine($"  {exeName} swagger                   (Open Swagger API testing page)");
-        Console.WriteLine($"  {exeName} api                       (Show API catalog / OpenAPI info)");
+        Console.WriteLine($"  {exeName} api [group] [endpoint]    (Show API catalog / OpenAPI info with filtering)");
         Console.WriteLine($"  {exeName} version                   (Show version)");
         Console.WriteLine($"  {exeName} get <endpoint> [--stdin] [body_param]");
         Console.WriteLine($"  {exeName} post <endpoint> [--stdin] [body_param]");

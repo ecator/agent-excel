@@ -267,7 +267,7 @@ public class CliCommandHandlerTests : BaseTests
         string exeName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "AgentExcel.exe");
 
         // Act
-        await CliCommandHandler.ShowApiCatalog("127.0.0.1", null, outputWriter, null);
+        await CliCommandHandler.ShowApiCatalog("127.0.0.1", args: null, client: null, outputWriter: outputWriter, overridePort: null);
 
         // Assert
         string output = outputWriter.ToString();
@@ -330,7 +330,7 @@ public class CliCommandHandlerTests : BaseTests
         };
 
         // Act
-        await CliCommandHandler.ShowApiCatalog("127.0.0.1", client, outputWriter, 8080);
+        await CliCommandHandler.ShowApiCatalog("127.0.0.1", args: new[] { "api", "*", "*" }, client: client, outputWriter: outputWriter, overridePort: 8080);
 
         // Assert
         string output = outputWriter.ToString();
