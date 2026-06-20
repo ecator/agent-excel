@@ -31,11 +31,12 @@ public static class CliCommandHandler
             CreateNoWindow = true,
             WindowStyle = ProcessWindowStyle.Hidden
         };
-
+        var exeName  = AppInfoHelper.GetExeName();
         Process.Start(startInfo);
         Console.WriteLine($"Server started at http://{listenHost}:{finalPort}");
         Console.WriteLine($"Swagger UI available at http://{listenHost}:{finalPort}/swagger/index.html");
         Console.WriteLine($"OpenAPI Specification available at http://{listenHost}:{finalPort}/swagger/v1/swagger.json");
+        Console.WriteLine($"You can run '{exeName} api [group] [endpoint]' to get API documentation.");
     }
 
     public static async Task StopBackgroundServer(string listenHost)
@@ -74,8 +75,8 @@ public static class CliCommandHandler
             var response = await client.GetAsync($"http://{listenHost}:{port}/status");
             if (response.IsSuccessStatusCode)
             {
-                var json = await response.Content.ReadAsStringAsync();
-                Console.WriteLine(json);
+                var result = await response.Content.ReadAsStringAsync();
+                Console.WriteLine(result);
             }
             else
             {
