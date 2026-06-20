@@ -209,4 +209,20 @@ public class OpenApiParserTests : BaseTests
         Assert.That(output, Does.Contain("[POST] /data/write-range - Write data to range"));
         Assert.That(output, Does.Contain("  Body:"));
     }
+
+    [Test]
+    public void FormatCatalog_GroupFilterWithGlobButNoEndpointFilter_DoesNotShowDetails()
+    {
+        // Arrange
+        using var catalog = OpenApiParser.Parse(MockSwaggerJson);
+        string[] args = ["api", "da*"];
+
+        // Act
+        string output = OpenApiParser.FormatCatalog(catalog, args);
+
+        // Assert
+        Assert.That(output, Does.Contain("=== Data ==="));
+        Assert.That(output, Does.Not.Contain("  Body:"));
+    }
 }
+

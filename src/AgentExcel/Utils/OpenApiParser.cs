@@ -142,10 +142,8 @@ internal static class OpenApiParser
         }
 
         // Determine if we should show details:
-        // 1. If endpoint filter is specified (args.Length > 2)
-        // 2. Or if group filter contains a glob '*'
-        bool showDetails = (args is not null && args.Length > 2) ||
-                           (groupFilter is not null && groupFilter.Contains('*'));
+        // 1. If endpoint filter is specified
+        bool showDetails = endpointFilter is not null;
 
         var filteredEndpoints = catalog.Endpoints.Where(ep =>
         {

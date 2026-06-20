@@ -70,10 +70,11 @@ AgentExcel.exe api
 
 The `api` command supports two-level filtering (group and endpoint name) with wildcard/glob (`*`) matching:
 
-*   **Summary mode**: If no `endpoint` parameter is specified (and the `group` parameter does not contain `*`), it shows only the group names and the endpoint paths with their summary descriptions (excluding detailed body schemas):
+*   **Summary mode**: If no `endpoint` parameter is specified, it shows only the group names and the endpoint paths with their summary descriptions (excluding detailed body schemas):
     *   `AgentExcel.exe api`: Lists all groups and endpoints' summaries.
     *   `AgentExcel.exe api data`: Lists summaries only for endpoints in the `data` group.
-*   **Detailed mode**: If an `endpoint` parameter is specified, OR if the `group` parameter contains `*`, it prints the detailed documentation including the request body JSON schema:
+    *   `AgentExcel.exe api *`: Lists summaries for all endpoints across all groups.
+*   **Detailed mode**: If an `endpoint` parameter is specified, it prints the detailed documentation including the request body JSON schema:
     *   `AgentExcel.exe api data /data/write-range`: Shows the detailed documentation for the `/data/write-range` endpoint (exact/suffix match).
     *   `AgentExcel.exe api data *range*`: Shows the detailed documentation for endpoints in the `data` group whose paths contain `range`.
     *   `AgentExcel.exe api data *`: Shows details for all endpoints in the `data` group.
