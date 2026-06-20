@@ -15,12 +15,12 @@ namespace AgentExcel.Tests.Services;
 
 [TestFixture]
 [Category("COM")]
-public class DataServiceTests : BaseTests
+public class RangeServiceTests : BaseTests
 {
 #pragma warning disable NUnit1032
     private static ExcelConnectionProvider? s_provider;
 #pragma warning restore NUnit1032
-    private DataService? _service;
+    private RangeService? _service;
     private Excel.Workbook? _wb;
     private string? _wbName;
 
@@ -68,7 +68,7 @@ public class DataServiceTests : BaseTests
     [SetUp]
     public void Setup()
     {
-        _service = new DataService(s_provider!);
+        _service = new RangeService(s_provider!);
 
         // Create a temporary workbook for testing
         var app = s_provider!.GetApp(createNew: false);

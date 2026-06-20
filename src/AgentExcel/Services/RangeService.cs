@@ -9,9 +9,9 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace AgentExcel.Services;
 
-public class DataService : ExcelServiceBase
+public class RangeService : ExcelServiceBase
 {
-    public DataService(IExcelConnectionProvider connectionProvider) : base(connectionProvider)
+    public RangeService(IExcelConnectionProvider connectionProvider) : base(connectionProvider)
     {
     }
 

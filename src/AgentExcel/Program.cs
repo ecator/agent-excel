@@ -106,7 +106,7 @@ class Program
         builder.Services.AddSingleton<IExcelConnectionProvider, ExcelConnectionProvider>();
         builder.Services.AddSingleton<WorkbookService>();
         builder.Services.AddSingleton<SheetService>();
-        builder.Services.AddSingleton<DataService>();
+        builder.Services.AddSingleton<RangeService>();
         builder.Services.AddSingleton<ShapeService>();
         builder.Services.AddSingleton<ChartService>();
         builder.Services.AddSingleton<ExportService>();

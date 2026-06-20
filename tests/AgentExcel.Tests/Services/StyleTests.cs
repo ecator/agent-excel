@@ -18,7 +18,7 @@ public class StyleTests : BaseTests
 #pragma warning disable NUnit1032
     private static ExcelConnectionProvider? s_provider;
 #pragma warning restore NUnit1032
-    private DataService? _service;
+    private RangeService? _service;
     private Excel.Workbook? _wb;
     private string? _wbName;
 
@@ -66,7 +66,7 @@ public class StyleTests : BaseTests
     [SetUp]
     public void Setup()
     {
-        _service = new DataService(s_provider!);
+        _service = new RangeService(s_provider!);
 
         var app = s_provider!.GetApp(createNew: false);
         Assert.That(app, Is.Not.Null);
