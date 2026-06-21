@@ -776,5 +776,65 @@ public class RangeServiceTests : BaseTests
         // Assert
         Assert.That(address, Is.EqualTo("$A$1:$B$2"));
     }
+
+    [Test]
+    [Category("COM")]
+    public void SetListValidation_WithValidInputs_AppliesValidationToRange()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act
+        _service!.SetListValidation(_wbName, "Sheet1", "A1", "\"Yes,No\"");
+
+        // Assert
+        var app = s_provider!.GetApp(createNew: false);
+        Assert.That(app, Is.Not.Null);
+
+        Excel.Workbooks? wbs = null;
+        Excel.Workbook? wb = null;
+        Excel.Sheets? sheets = null;
+        Excel.Worksheet? ws = null;
+        Excel.Range? range = null;
+        Excel.Validation? val = null;
+        try
+        {
+            wbs = app.Workbooks;
+            wb = wbs[_wbName];
+            sheets = wb.Sheets;
+            ws = (Excel.Worksheet)sheets["Sheet1"];
+            range = ws.Range["A1"];
+            val = range.Validation;
+
+            Assert.That(val.Type, Is.EqualTo((int)Excel.XlDVType.xlValidateList));
+            Assert.That(val.Formula1, Is.EqualTo("\"Yes,No\""));
+        }
+        finally
+        {
+            ExcelConnector.SafeReleaseComObject(val);
+            ExcelConnector.SafeReleaseComObject(range);
+            ExcelConnector.SafeReleaseComObject(ws);
+            ExcelConnector.SafeReleaseComObject(sheets);
+            ExcelConnector.SafeReleaseComObject(wb);
+            ExcelConnector.SafeReleaseComObject(wbs);
+        }
+    }
+
+    [Test]
+    [Category("COM")]
+    public void SetListValidation_WithInvalidRangeAddress_ThrowsArgumentException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.SetListValidation(_wbName, "Sheet1", "InvalidRangeAddress!!!", "\"Yes,No\"");
+        });
+
+        Assert.That(ex!.Message, Contains.Substring("Invalid Excel range address"));
+    }
 }
+
 

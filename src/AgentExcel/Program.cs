@@ -117,7 +117,6 @@ class Program
         builder.Services.AddSingleton<ExportService>();
         builder.Services.AddSingleton<PivotTableService>();
         builder.Services.AddSingleton<MacroService>();
-        builder.Services.AddSingleton<ValidationService>();
         builder.Services.AddSingleton<SystemService>();
 
         var app = builder.Build();
@@ -137,7 +136,6 @@ class Program
         app.MapExportEndpoints();
         app.MapPivotTableEndpoints();
         app.MapMacroEndpoints();
-        app.MapValidationEndpoints();
 
         // Retrieve connection provider and register system shutdown handler
         var connectionProvider = app.Services.GetRequiredService<IExcelConnectionProvider>();

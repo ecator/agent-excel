@@ -1241,6 +1241,36 @@ public class RangeService : ExcelServiceBase
         });
     }
 
+    public void SetListValidation(string workbookName, string sheetName, string rangeAddress, string formula)
+    {
+        ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? range = null;
+            Excel.Validation? validation = null;
+            try
+            {
+                wb = GetWorkbook(workbookName, createNew: true);
+                ws = GetWorksheet(wb, sheetName);
+                range = GetRange(ws, rangeAddress);
+                validation = range.Validation;
+                validation.Delete();
+                validation.Add(Excel.XlDVType.xlValidateList, Excel.XlDVAlertStyle.xlValidAlertStop,
+                    Excel.XlFormatConditionOperator.xlBetween, formula);
+                validation.IgnoreBlank = true;
+                validation.InCellDropdown = true;
+            }
+            finally
+            {
+                SafeReleaseComObject(validation);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
     private Excel.ListObject GetTable(string workbookName, string? sheetName, string tableName)
     {
         Excel.Workbook? wb = null;

@@ -145,6 +145,14 @@ public static class RangeEndpoints
         .WithTags("Range")
         .WithSummary("Set selection of a specific sheet and activate the range");
 
+        range.MapPost("/set-list", (SetListValidationRequest req, RangeService dataService) =>
+        {
+            dataService.SetListValidation(req.Workbook, req.Sheet, req.Range, req.Formula);
+            return Results.Text($"validation of range[{req.Range}] has changed to {req.Formula}");
+        })
+        .WithTags("Range")
+        .WithSummary("Set a dropdown list validation");
+
     }
 
     private static string FormatFindResults(List<FindResult> results, string action)
