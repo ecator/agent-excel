@@ -1,13 +1,13 @@
 ---
 name: use-agent-excel
-description: Use Agent Excel to handle Excel files
+description: Use AgentExcel to handle Excel files
 license: MIT
 metadata:
   author: ecat
-  version: "0.1.1"
+  version: "0.2.0"
 ---
 
-# Use Agent Excel
+# Use AgentExcel
 
 This skill provides instructions for utilizing the `AgentExcel.exe` CLI tool to automate and manage Microsoft Excel. It spins up a local background HTTP daemon (server) and communicates with it via HTTP requests to read/write active workbooks efficiently.
 
