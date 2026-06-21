@@ -115,7 +115,6 @@ class Program
         builder.Services.AddSingleton<ShapeService>();
         builder.Services.AddSingleton<ChartService>();
         builder.Services.AddSingleton<ExportService>();
-        builder.Services.AddSingleton<PivotTableService>();
         builder.Services.AddSingleton<MacroService>();
         builder.Services.AddSingleton<SystemService>();
 
@@ -134,7 +133,6 @@ class Program
         app.MapShapeEndpoints();
         app.MapChartEndpoints();
         app.MapExportEndpoints();
-        app.MapPivotTableEndpoints();
         app.MapMacroEndpoints();
 
         // Retrieve connection provider and register system shutdown handler
