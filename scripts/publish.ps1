@@ -1,5 +1,6 @@
 $projectPath = Resolve-Path $(Join-Path $PSScriptRoot "..\src\AgentExcel\AgentExcel.csproj")
-$skillBinPath = Resolve-Path $(Join-Path $PSScriptRoot "..\skills\use-agent-excel\bin")
+$skillBinPath = Resolve-Path $(Join-Path $PSScriptRoot "..\skills\use-agent-excel")
+$skillBinPath = Join-Path $skillBinPath "bin"
 if (Test-Path $skillBinPath) {
     Remove-Item -Recurse -Force $skillBinPath
 }
