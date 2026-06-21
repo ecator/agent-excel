@@ -544,7 +544,7 @@ public class RangeService : ExcelServiceBase
     }
 
 
-    public string ConvertToTable(string workbookName, string sheetName, string range, string? table, bool hasHeaders)
+    public string ConvertToTable(string workbookName, string sheetName, string rangeAddress, string? table, bool hasHeaders)
     {
         return ExecuteWithRetry(() =>
         {
@@ -572,7 +572,7 @@ public class RangeService : ExcelServiceBase
                 }
 
                 ws = GetWorksheet(wb, sheetName);
-                excelRange = GetRange(ws, range);
+                excelRange = GetRange(ws, rangeAddress);
                 tables = ws.ListObjects;
 
                 listObj = tables.Add(Excel.XlListObjectSourceType.xlSrcRange, excelRange,
@@ -618,7 +618,7 @@ public class RangeService : ExcelServiceBase
         });
     }
 
-    public List<FindResult> Find(string workbookName, string? sheetName, string? range, string what, bool matchCase, bool wholeWord)
+    public List<FindResult> Find(string workbookName, string? sheetName, string? rangeAddress, string what, bool matchCase, bool wholeWord)
     {
         return ExecuteWithRetry(() =>
         {
@@ -633,7 +633,7 @@ public class RangeService : ExcelServiceBase
                     try
                     {
                         ws = GetWorksheet(wb, sheetName);
-                        FindInSheet(ws, range, what, matchCase, wholeWord, results);
+                        FindInSheet(ws, rangeAddress, what, matchCase, wholeWord, results);
                     }
                     finally
                     {
@@ -652,7 +652,7 @@ public class RangeService : ExcelServiceBase
                             {
                                 try
                                 {
-                                    FindInSheet(worksheet, range, what, matchCase, wholeWord, results);
+                                    FindInSheet(worksheet, rangeAddress, what, matchCase, wholeWord, results);
                                 }
                                 finally
                                 {
@@ -731,11 +731,11 @@ public class RangeService : ExcelServiceBase
         }
     }
 
-    public int Replace(string workbookName, string? sheetName, string? range, string what, string replacement, bool matchCase, bool wholeWord)
+    public int Replace(string workbookName, string? sheetName, string? rangeAddress, string what, string replacement, bool matchCase, bool wholeWord)
     {
         return ExecuteWithRetry(() =>
         {
-            var findResults = Find(workbookName, sheetName, range, what, matchCase, wholeWord);
+            var findResults = Find(workbookName, sheetName, rangeAddress, what, matchCase, wholeWord);
             if (findResults.Count == 0)
             {
                 return 0;
@@ -752,7 +752,7 @@ public class RangeService : ExcelServiceBase
                     try
                     {
                         ws = GetWorksheet(wb, sheetName);
-                        searchRange = string.IsNullOrEmpty(range) ? ws.UsedRange : GetRange(ws, range);
+                        searchRange = string.IsNullOrEmpty(rangeAddress) ? ws.UsedRange : GetRange(ws, rangeAddress);
                         if (searchRange != null)
                         {
                             object lookAt = wholeWord ? Excel.XlLookAt.xlWhole : Excel.XlLookAt.xlPart;
@@ -779,7 +779,7 @@ public class RangeService : ExcelServiceBase
                                 Excel.Range? searchRange = null;
                                 try
                                 {
-                                    searchRange = string.IsNullOrEmpty(range) ? worksheet.UsedRange : GetRange(worksheet, range);
+                                    searchRange = string.IsNullOrEmpty(rangeAddress) ? worksheet.UsedRange : GetRange(worksheet, rangeAddress);
                                     if (searchRange != null)
                                     {
                                         object lookAt = wholeWord ? Excel.XlLookAt.xlWhole : Excel.XlLookAt.xlPart;
@@ -875,7 +875,7 @@ public class RangeService : ExcelServiceBase
         });
     }
 
-    public void SetStyle(string workbookName, string sheetName, string range, CellStyle style)
+    public void SetStyle(string workbookName, string sheetName, string rangeAddress, CellStyle style)
     {
         ExecuteWithRetry(() =>
         {
@@ -888,7 +888,7 @@ public class RangeService : ExcelServiceBase
             {
                 wb = GetWorkbook(workbookName, createNew: true);
                 ws = GetWorksheet(wb, sheetName);
-                excelRange = GetRange(ws, range);
+                excelRange = GetRange(ws, rangeAddress);
 
                 if (style.FontName != null || style.FontSize != null || style.Bold != null || style.Italic != null || style.Color != null)
                 {
@@ -939,7 +939,7 @@ public class RangeService : ExcelServiceBase
         });
     }
 
-    public CellStyle GetStyle(string workbookName, string sheetName, string? range)
+    public CellStyle GetStyle(string workbookName, string sheetName, string? rangeAddress)
     {
         return ExecuteWithRetry(() =>
         {
@@ -955,13 +955,13 @@ public class RangeService : ExcelServiceBase
                 wb = GetWorkbook(workbookName);
                 ws = GetWorksheet(wb, sheetName);
 
-                if (string.IsNullOrWhiteSpace(range))
+                if (string.IsNullOrWhiteSpace(rangeAddress))
                 {
                     excelRange = ws.UsedRange;
                 }
                 else
                 {
-                    excelRange = GetRange(ws, range);
+                    excelRange = GetRange(ws, rangeAddress);
                 }
 
                 if (excelRange == null)

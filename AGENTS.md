@@ -77,6 +77,18 @@ Once the background Web service starts, it exposes the following local endpoints
 * **`GET /status`**: Returns the health status of the daemon and the Excel attachment status (YAML format).
 * **`POST /exit`**: Upon receiving the request, calls `SafeReleaseComObject` to release the Application handle and executes `IHostApplicationLifetime.StopApplication()` to gracefully exit (returns shutdown status in YAML format).
 
+### 5.1 Parameter and Variable Naming Conventions
+To maintain consistency across API boundaries and distinguish between string representations and actual Excel COM objects:
+*   **Workbook**:
+    *   In Endpoints/Models (API Request/Response objects): Named `Workbook` (e.g., `req.Workbook` and maps to `"workbook"` in JSON).
+    *   In Services: Named `workbookName` (as a `string` parameter or variable).
+*   **Sheet / Worksheet**:
+    *   In Endpoints/Models (API Request/Response objects): Named `Sheet` (e.g., `req.Sheet` and maps to `"sheet"` in JSON).
+    *   In Services: Named `sheetName` (as a `string` parameter or variable).
+*   **Range / Cell**:
+    *   In Endpoints/Models (API Request/Response objects): Named `Range` (e.g., `req.Range` and maps to `"range"` in JSON).
+    *   In Services: Named `rangeAddress` (as a `string` parameter or variable).
+
 ## 6. ⚠️ Absolute Red Lines: COM Operations and Memory Leak Prevention
 When writing C# code that operates on Excel COM, the AI must strictly follow these rules to prevent leftover `excel.exe` zombie processes or program crashes:
 

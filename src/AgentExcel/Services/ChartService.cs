@@ -57,7 +57,7 @@ public class ChartService : ExcelServiceBase
         });
     }
 
-    public ChartInfo AddChart(string workbookName, string sheetName, string range, string chartType, string title)
+    public ChartInfo AddChart(string workbookName, string sheetName, string rangeAddress, string chartType, string title)
     {
         return ExecuteWithRetry(() =>
         {
@@ -71,7 +71,7 @@ public class ChartService : ExcelServiceBase
             {
                 wb = GetWorkbook(workbookName, createNew: true);
                 ws = GetWorksheet(wb, sheetName);
-                source = GetRange(ws, range);
+                source = GetRange(ws, rangeAddress);
                 charts = (Excel.ChartObjects)ws.ChartObjects();
                 co = charts.Add(100, 100, 400, 300);
                 chart = co.Chart;
@@ -119,7 +119,7 @@ public class ChartService : ExcelServiceBase
         });
     }
 
-    public ChartInfo UpdateChart(string workbookName, string sheetName, string chartName, string? range, string? chartType, string? title)
+    public ChartInfo UpdateChart(string workbookName, string sheetName, string chartName, string? rangeAddress, string? chartType, string? title)
     {
         return ExecuteWithRetry(() =>
         {
@@ -135,9 +135,9 @@ public class ChartService : ExcelServiceBase
                 co = GetChart(ws, chartName);
                 chart = co.Chart;
 
-                if (!string.IsNullOrEmpty(range))
+                if (!string.IsNullOrEmpty(rangeAddress))
                 {
-                    source = GetRange(ws, range);
+                    source = GetRange(ws, rangeAddress);
                     chart.SetSourceData(source);
                 }
 

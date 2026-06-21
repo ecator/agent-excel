@@ -11,7 +11,7 @@ public class ExportService : ExcelServiceBase
     {
     }
 
-    public void ExportRangeAsImage(string workbookName, string sheetName, string range, string outputFile)
+    public void ExportRangeAsImage(string workbookName, string sheetName, string rangeAddress, string outputFile)
     {
         ValidateOutputFile(outputFile, ".png");
         ExecuteWithRetry(() =>
@@ -35,7 +35,7 @@ public class ExportService : ExcelServiceBase
                 wb.Activate();
                 ws.Activate();
 
-                xlRange = GetRange(ws, range);
+                xlRange = GetRange(ws, rangeAddress);
                 xlRange.Select();
                 xlRange.CopyPicture(Excel.XlPictureAppearance.xlScreen, Excel.XlCopyPictureFormat.xlBitmap);
 

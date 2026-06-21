@@ -10,7 +10,7 @@ public class PivotTableService : ExcelServiceBase
     {
     }
 
-    public void CreatePivotTable(string workbookName, string sourceSheet, string sourceRange, string targetSheet, string targetCell, string tableName)
+    public void CreatePivotTable(string workbookName, string sourceSheetName, string sourceRangeAddress, string targetSheetName, string targetCellAddress, string tableName)
     {
         ExecuteWithRetry(() =>
         {
@@ -26,10 +26,10 @@ public class PivotTableService : ExcelServiceBase
             try
             {
                 wb = GetWorkbook(workbookName, createNew: true);
-                wsSource = GetWorksheet(wb, sourceSheet);
-                wsTarget = GetWorksheet(wb, targetSheet);
-                srcRange = wsSource.Range[sourceRange];
-                tgtRange = wsTarget.Range[targetCell];
+                wsSource = GetWorksheet(wb, sourceSheetName);
+                wsTarget = GetWorksheet(wb, targetSheetName);
+                srcRange = GetRange(wsSource, sourceRangeAddress);
+                tgtRange = GetRange(wsTarget, targetCellAddress);
 
                 pcaches = wb.PivotCaches();
                 pcache = pcaches.Create(Excel.XlPivotTableSourceType.xlDatabase, srcRange);
