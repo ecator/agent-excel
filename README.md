@@ -1,3 +1,16 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Workflow Status](https://github.com/ecator/agent-excel/actions/workflows/build.yml/badge.svg)](https://github.com/ecator/agent-excel/releases)
+
+[🇨🇳中文](https://www.readme-i18n.com/zh/ecator/agent-excel)
+[🇯🇵日本語](https://www.readme-i18n.com/ja/ecator/agent-excel)
+[🇰🇷한국어](https://www.readme-i18n.com/ko/ecator/agent-excel)
+[🇩🇪Deutsch](https://www.readme-i18n.com/de/ecator/agent-excel) 
+[🇪🇸Español](https://www.readme-i18n.com/es/ecator/agent-excel)
+[🇫🇷français](https://www.readme-i18n.com/fr/ecator/agent-excel)
+[🇵🇹Português](https://www.readme-i18n.com/pt/ecator/agent-excel)
+[🇷🇺Русский](https://www.readme-i18n.com/ru/ecator/agent-excel)
+
+
 # AgentExcel
 
 A local HTTP API service accompanied by a lightweight CLI client designed to control Microsoft Excel via RESTful APIs, specifically tailored for AI Agents.
@@ -26,7 +39,7 @@ graph LR
 
 ## Installation
 
-Please download [use-agent-excel.zip](skills/use-agent-excel/use-agent-excel.zip) and extract it to your agent's skills folder (e.g., `.agents/skills`).
+Please download [use-agent-excel.zip](https://github.com/ecator/agent-excel/releases/latest) and extract it to your agent's skills folder (e.g., `.agents/skills`).
 Once installed, you can ask your agent questions like:
 ```
 What workbooks are currently open?
