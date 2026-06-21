@@ -86,7 +86,7 @@ public class ChartServiceTests : BaseTests
 
             sheets = wb.Sheets;
             ws = (Excel.Worksheet)sheets[1];
-            
+
             // Populate some test data for chart
             r = ws.Range["A1:B4"];
             r.Value2 = new object[,]
@@ -151,7 +151,7 @@ public class ChartServiceTests : BaseTests
 
         var list = _service.ListCharts(_wbName, SheetName);
         Assert.That(list, Has.Count.EqualTo(1));
-        
+
         var listChartInfo = list[0];
         Assert.That(listChartInfo.Name, Is.EqualTo(chartInfo.Name));
         Assert.That(listChartInfo.Range, Is.EqualTo("A1:B4"));

@@ -6,7 +6,9 @@ namespace AgentExcel.Models;
 public record AddShapeRequest : WorksheetRequestBase
 {
     /// <summary>
-    /// The shape type or geometry name (e.g., 'Rectangle', 'Oval').
+    /// The shape type or geometry name. Supported values include: 'Textbox', 'Rectangle', 'Oval', 'Arrow' (RightArrow),
+    /// 'Diamond', 'Parallelogram', and flowchart shapes such as 'FlowchartProcess', 'FlowchartDecision', 'FlowchartData',
+    /// 'FlowchartDocument', 'FlowchartPredefinedProcess', 'FlowchartPreparation', 'FlowchartTerminator', and any other MsoAutoShapeType (case-insensitive, defaults to 'Rectangle' if not recognized).
     /// </summary>
     public required string Type { get; init; }
 

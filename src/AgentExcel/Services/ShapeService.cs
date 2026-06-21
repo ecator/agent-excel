@@ -41,14 +41,17 @@ public class ShapeService : ExcelServiceBase
                         // Ignore shapes that don't support text frames
                     }
 
+                    ShapeConnectionInfo? connection = GetShapeConnectionInfo(shape);
+
                     result.Add(new ShapeInfo(
                         shape.Name,
-                        shape.Type.ToString(),
+                        GetShapeTypeName(shape),
                         (float)shape.Left,
                         (float)shape.Top,
                         (float)shape.Width,
                         (float)shape.Height,
-                        text
+                        text,
+                        connection
                     ));
                     SafeReleaseComObject(shape);
                 }
@@ -63,7 +66,7 @@ public class ShapeService : ExcelServiceBase
         });
     }
 
-    public string AddShape(string workbookName, string sheetName, string type, float left, float top, float width, float height, string? text)
+    public ShapeInfo AddShape(string workbookName, string sheetName, string type, float left, float top, float width, float height, string? text)
     {
         return ExecuteWithRetry(() =>
         {
@@ -83,13 +86,7 @@ public class ShapeService : ExcelServiceBase
                 }
                 else
                 {
-                    var autoType = type.ToLower() switch
-                    {
-                        "rectangle" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeRectangle,
-                        "oval" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeOval,
-                        "arrow" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeRightArrow,
-                        _ => Microsoft.Office.Core.MsoAutoShapeType.msoShapeRectangle
-                    };
+                    Microsoft.Office.Core.MsoAutoShapeType autoType = ParseAutoShapeType(type);
                     shape = shapes.AddShape(autoType, left, top, width, height);
                 }
 
@@ -102,7 +99,15 @@ public class ShapeService : ExcelServiceBase
                     SafeReleaseComObject(tf);
                 }
 
-                return shape.Name;
+                return new ShapeInfo(
+                    shape.Name,
+                    GetShapeTypeName(shape),
+                    (float)shape.Left,
+                    (float)shape.Top,
+                    (float)shape.Width,
+                    (float)shape.Height,
+                    text
+                );
             }
             finally
             {
@@ -114,20 +119,18 @@ public class ShapeService : ExcelServiceBase
         });
     }
 
-    public void UpdateShape(string workbookName, string sheetName, string shapeName, float? left, float? top, float? width, float? height, string? text)
+    public ShapeInfo UpdateShape(string workbookName, string sheetName, string shapeName, float? left, float? top, float? width, float? height, string? text)
     {
-        ExecuteWithRetry(() =>
+        return ExecuteWithRetry(() =>
         {
             Excel.Workbook? wb = null;
             Excel.Worksheet? ws = null;
-            Excel.Shapes? shapes = null;
             Excel.Shape? shape = null;
             try
             {
                 wb = GetWorkbook(workbookName, createNew: true);
                 ws = GetWorksheet(wb, sheetName);
-                shapes = ws.Shapes;
-                shape = shapes.Item(shapeName);
+                shape = GetShape(ws, shapeName);
 
                 if (left.HasValue) shape.Left = left.Value;
                 if (top.HasValue) shape.Top = top.Value;
@@ -142,11 +145,37 @@ public class ShapeService : ExcelServiceBase
                     SafeReleaseComObject(chars);
                     SafeReleaseComObject(tf);
                 }
+
+                string? currentText = null;
+                try
+                {
+                    var tf = shape.TextFrame;
+                    var chars = tf.Characters();
+                    currentText = chars.Text;
+                    SafeReleaseComObject(chars);
+                    SafeReleaseComObject(tf);
+                }
+                catch
+                {
+                    // Ignore text frame errors
+                }
+
+                ShapeConnectionInfo? connection = GetShapeConnectionInfo(shape);
+
+                return new ShapeInfo(
+                    shape.Name,
+                    GetShapeTypeName(shape),
+                    (float)shape.Left,
+                    (float)shape.Top,
+                    (float)shape.Width,
+                    (float)shape.Height,
+                    currentText,
+                    connection
+                );
             }
             finally
             {
                 SafeReleaseComObject(shape);
-                SafeReleaseComObject(shapes);
                 SafeReleaseComObject(ws);
                 SafeReleaseComObject(wb);
             }
@@ -159,23 +188,174 @@ public class ShapeService : ExcelServiceBase
         {
             Excel.Workbook? wb = null;
             Excel.Worksheet? ws = null;
-            Excel.Shapes? shapes = null;
             Excel.Shape? shape = null;
             try
             {
                 wb = GetWorkbook(workbookName, createNew: true);
                 ws = GetWorksheet(wb, sheetName);
-                shapes = ws.Shapes;
-                shape = shapes.Item(shapeName);
+                shape = GetShape(ws, shapeName);
                 shape.Delete();
             }
             finally
             {
                 SafeReleaseComObject(shape);
-                SafeReleaseComObject(shapes);
                 SafeReleaseComObject(ws);
                 SafeReleaseComObject(wb);
             }
         });
+    }
+
+    private Excel.Shape GetShape(Excel.Worksheet ws, string shapeName)
+    {
+        if (string.IsNullOrWhiteSpace(shapeName))
+        {
+            throw new ArgumentException("Shape name cannot be null or empty.", nameof(shapeName));
+        }
+
+        Excel.Shapes? shapes = null;
+        try
+        {
+            shapes = ws.Shapes;
+            try
+            {
+                return shapes.Item(shapeName);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Shape '{shapeName}' not found in worksheet '{ws.Name}'.", ex);
+            }
+        }
+        finally
+        {
+            SafeReleaseComObject(shapes);
+        }
+    }
+
+    private ShapeConnectionInfo? GetShapeConnectionInfo(Excel.Shape shape)
+    {
+        if (shape.Connector != Microsoft.Office.Core.MsoTriState.msoTrue)
+        {
+            return null;
+        }
+
+        Excel.ConnectorFormat? connFormat = null;
+        Excel.Shape? beginShape = null;
+        Excel.Shape? endShape = null;
+        try
+        {
+            connFormat = shape.ConnectorFormat;
+            string? beginShapeName = null;
+            int? beginConnectionSite = null;
+            if (connFormat.BeginConnected == Microsoft.Office.Core.MsoTriState.msoTrue)
+            {
+                beginShape = connFormat.BeginConnectedShape;
+                beginShapeName = beginShape.Name;
+                beginConnectionSite = connFormat.BeginConnectionSite;
+            }
+
+            string? endShapeName = null;
+            int? endConnectionSite = null;
+            if (connFormat.EndConnected == Microsoft.Office.Core.MsoTriState.msoTrue)
+            {
+                endShape = connFormat.EndConnectedShape;
+                endShapeName = endShape.Name;
+                endConnectionSite = connFormat.EndConnectionSite;
+            }
+
+            return new ShapeConnectionInfo(beginShapeName, beginConnectionSite, endShapeName, endConnectionSite);
+        }
+        catch
+        {
+            // Ignore connection reading errors
+            return null;
+        }
+        finally
+        {
+            SafeReleaseComObject(endShape);
+            SafeReleaseComObject(beginShape);
+            SafeReleaseComObject(connFormat);
+        }
+    }
+
+    private Microsoft.Office.Core.MsoAutoShapeType ParseAutoShapeType(string typeStr)
+    {
+        string trimmed = typeStr.Trim();
+
+        // Try parsing directly (case-insensitive)
+        if (Enum.TryParse<Microsoft.Office.Core.MsoAutoShapeType>(trimmed, true, out var result))
+        {
+            return result;
+        }
+
+        // Try prepending "msoShape" (case-insensitive)
+        if (!trimmed.StartsWith("msoShape", StringComparison.OrdinalIgnoreCase))
+        {
+            string prefixed = "msoShape" + trimmed;
+            if (Enum.TryParse<Microsoft.Office.Core.MsoAutoShapeType>(prefixed, true, out result))
+            {
+                return result;
+            }
+        }
+
+        // Fallback switch mapping for common aliases / flowchart shapes
+        return trimmed.ToLowerInvariant() switch
+        {
+            "rectangle" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeRectangle,
+            "oval" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeOval,
+            "arrow" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeRightArrow,
+            "diamond" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeDiamond,
+            "parallelogram" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeParallelogram,
+
+            // Flowchart aliases
+            "process" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeFlowchartProcess,
+            "decision" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeFlowchartDecision,
+            "data" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeFlowchartData,
+            "document" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeFlowchartDocument,
+            "predefinedprocess" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeFlowchartPredefinedProcess,
+            "preparation" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeFlowchartPreparation,
+            "terminator" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeFlowchartTerminator,
+
+            _ => Microsoft.Office.Core.MsoAutoShapeType.msoShapeRectangle
+        };
+    }
+
+    private string GetShapeTypeName(Excel.Shape shape)
+    {
+        var type = shape.Type;
+        if (type == Microsoft.Office.Core.MsoShapeType.msoAutoShape)
+        {
+            try
+            {
+                var autoType = shape.AutoShapeType;
+                string name = autoType.ToString();
+                if (name.StartsWith("msoShape"))
+                {
+                    return name.Substring("msoShape".Length);
+                }
+                return name;
+            }
+            catch
+            {
+                // Fallback to general type if AutoShapeType read fails
+                string typeName = type.ToString();
+                if (typeName.StartsWith("mso"))
+                {
+                    return typeName.Substring(3);
+                }
+                return typeName;
+            }
+        }
+        else if (type == Microsoft.Office.Core.MsoShapeType.msoTextBox)
+        {
+            return "TextBox";
+        }
+
+        // For other types, return the enum name with "mso" prefix removed if present
+        string generalTypeName = type.ToString();
+        if (generalTypeName.StartsWith("mso"))
+        {
+            return generalTypeName.Substring(3);
+        }
+        return generalTypeName;
     }
 }

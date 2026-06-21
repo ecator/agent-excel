@@ -23,6 +23,20 @@ public record CellStyle(
 );
 
 /// <summary>
+/// Connection details of a shape if it is a connector.
+/// </summary>
+/// <param name="BeginShapeName">The name of the shape connected at the beginning of the connector.</param>
+/// <param name="BeginConnectionSite">The connection site index on the beginning connected shape.</param>
+/// <param name="EndShapeName">The name of the shape connected at the end of the connector.</param>
+/// <param name="EndConnectionSite">The connection site index on the end connected shape.</param>
+public record ShapeConnectionInfo(
+    string? BeginShapeName,
+    int? BeginConnectionSite,
+    string? EndShapeName,
+    int? EndConnectionSite
+);
+
+/// <summary>
 /// Information about a shape in a worksheet.
 /// </summary>
 /// <param name="Name">The unique name of the shape.</param>
@@ -32,7 +46,17 @@ public record CellStyle(
 /// <param name="Width">Width of the shape in points.</param>
 /// <param name="Height">Height of the shape in points.</param>
 /// <param name="Text">The text inside the shape, if any.</param>
-public record ShapeInfo(string Name, string Type, float Left, float Top, float Width, float Height, string? Text);
+/// <param name="Connection">Flowchart connection details if the shape is a connector.</param>
+public record ShapeInfo(
+    string Name,
+    string Type,
+    float Left,
+    float Top,
+    float Width,
+    float Height,
+    string? Text,
+    ShapeConnectionInfo? Connection = null
+);
 
 /// <summary>
 /// Information about a chart in a worksheet.
