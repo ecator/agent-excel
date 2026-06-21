@@ -15,8 +15,16 @@ public static class MacroEndpoints
         var macros = app.MapGroup("/macros").WithOpenApi();
 
         macros.MapPost("/run", (RunMacroRequest req, MacroService macroService) =>
-            Results.Extensions.Yaml(new { result = macroService.RunMacro(req.Workbook, req.MacroName, req.Args) }))
+        {
+            var result = macroService.RunMacro(req.Workbook, req.Macro, req.Args);
+            return Results.Text($"result of {req.Macro}:\n{result}", "text/plain; charset=utf-8");
+        })
             .WithTags("Macros")
             .WithSummary("Run a VBA macro");
+
+        macros.MapPost("/list", (WorkbookRequest req, MacroService macroService) =>
+            Results.Extensions.Yaml(macroService.ListMacros(req.Workbook)))
+            .WithTags("Macros")
+            .WithSummary("List all macros and their parameters in the workbook");
     }
 }

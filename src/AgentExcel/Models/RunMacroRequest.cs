@@ -8,7 +8,7 @@ public record RunMacroRequest : WorkbookRequestBase
     /// <summary>
     /// The name of the macro to execute.
     /// </summary>
-    public required string MacroName { get; init; }
+    public required string Macro { get; init; }
 
     /// <summary>
     /// Optional array of arguments to pass to the macro.
