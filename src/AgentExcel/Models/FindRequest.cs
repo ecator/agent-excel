@@ -16,7 +16,7 @@ public record FindRequest : WorkbookRequestBase
     public string? Range { get; init; }
 
     /// <summary>
-    /// The text string to search for.
+    /// The text string to search for. Supports Excel wildcard characters (e.g., '*' for multiple characters, '?' for a single character, and '~' to escape them).
     /// </summary>
     public required string What { get; init; }
 
