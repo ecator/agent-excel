@@ -8,10 +8,10 @@ public record AddChartRequest : WorksheetRequestBase
     /// <summary>
     /// The data source range address for the chart (e.g., 'A1:B10').
     /// </summary>
-    public required string RangeAddress { get; init; }
+    public required string Range { get; init; }
 
     /// <summary>
-    /// The type of the chart (e.g., 'xlColumnClustered', 'xlLine', 'xlPie').
+    /// The type of the chart. Supported values are: 'column', 'line', 'pie', 'bar'.
     /// </summary>
     public required string ChartType { get; init; }
 

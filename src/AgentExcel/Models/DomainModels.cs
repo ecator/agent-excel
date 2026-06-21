@@ -33,6 +33,16 @@ public record CellStyle(
 /// <param name="Height">Height of the shape in points.</param>
 /// <param name="Text">The text inside the shape, if any.</param>
 public record ShapeInfo(string Name, string Type, float Left, float Top, float Width, float Height, string? Text);
+
+/// <summary>
+/// Information about a chart in a worksheet.
+/// </summary>
+/// <param name="Name">The unique name of the chart.</param>
+/// <param name="Range">The data source range address of the chart.</param>
+/// <param name="Type">The type of the chart.</param>
+/// <param name="Title">The title text of the chart.</param>
+public record ChartInfo(string Name, string Range, string Type, string Title);
+
 /// <summary>
 /// Represents a match from a find operation in a worksheet.
 /// </summary>

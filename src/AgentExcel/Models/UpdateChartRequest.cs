@@ -13,10 +13,10 @@ public record UpdateChartRequest : WorksheetRequestBase
     /// <summary>
     /// Optional new data source range address.
     /// </summary>
-    public string? RangeAddress { get; init; }
+    public string? Range { get; init; }
 
     /// <summary>
-    /// Optional new chart type.
+    /// Optional new chart type. Supported values are: 'column', 'line', 'pie', 'bar'.
     /// </summary>
     public string? ChartType { get; init; }
 
