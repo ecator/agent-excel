@@ -315,6 +315,12 @@ public class ShapeService : ExcelServiceBase
             "preparation" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeFlowchartPreparation,
             "terminator" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeFlowchartTerminator,
 
+            // Callout aliases (dialogue bubbles)
+            "rectangularcallout" or "rectcallout" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeRectangularCallout,
+            "roundedrectangularcallout" or "roundrectcallout" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeRoundedRectangularCallout,
+            "ovalcallout" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeOvalCallout,
+            "cloudcallout" => Microsoft.Office.Core.MsoAutoShapeType.msoShapeCloudCallout,
+
             _ => Microsoft.Office.Core.MsoAutoShapeType.msoShapeRectangle
         };
     }

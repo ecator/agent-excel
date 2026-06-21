@@ -171,6 +171,36 @@ public class ShapeServiceTests : BaseTests
     }
 
     [Test]
+    public void AddShape_WithCalloutShapes_CreatesSpecificShapesAndReturnsCorrectTypeNames()
+    {
+        // Act & Assert callout (dialogue bubble) shapes
+        ShapeInfo rectCallout = _service!.AddShape(_wbName, SheetName, "RectCallout", 10, 10, 100, 50, "Hello Rect");
+        Assert.That(rectCallout.Type, Is.EqualTo("RectangularCallout"));
+        Assert.That(rectCallout.Text, Is.EqualTo("Hello Rect"));
+
+        ShapeInfo roundRectCallout = _service.AddShape(_wbName, SheetName, "roundrectcallout", 10, 80, 100, 50, "Hello RoundRect");
+        Assert.That(roundRectCallout.Type, Is.EqualTo("RoundedRectangularCallout"));
+
+        ShapeInfo ovalCallout = _service.AddShape(_wbName, SheetName, "OvalCallout", 10, 150, 100, 50, "Hello Oval");
+        Assert.That(ovalCallout.Type, Is.EqualTo("OvalCallout"));
+
+        ShapeInfo cloudCallout = _service.AddShape(_wbName, SheetName, "cloudcallout", 10, 220, 100, 50, "Hello Cloud");
+        Assert.That(cloudCallout.Type, Is.EqualTo("CloudCallout"));
+
+        // Check listing shapes
+        var list = _service.ListShapes(_wbName, SheetName);
+        Assert.That(list, Has.Count.EqualTo(4));
+
+        var foundRect = list.FirstOrDefault(s => s.Name == rectCallout.Name);
+        Assert.That(foundRect, Is.Not.Null);
+        Assert.That(foundRect!.Type, Is.EqualTo("RectangularCallout"));
+
+        var foundRoundRect = list.FirstOrDefault(s => s.Name == roundRectCallout.Name);
+        Assert.That(foundRoundRect, Is.Not.Null);
+        Assert.That(foundRoundRect!.Type, Is.EqualTo("RoundedRectangularCallout"));
+    }
+
+    [Test]
     public void UpdateShape_WithNewProperties_UpdatesShapeSuccessfully()
     {
         // Arrange
