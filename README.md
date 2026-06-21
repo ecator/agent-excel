@@ -109,19 +109,23 @@ Follow these steps to release a new version of AgentExcel:
 ```powershell
 .\scripts\version.ps1 x.y.z
 ```
-2.  Stage the changes:
+2.  Publish to skill folder:
+```powershell
+.\scripts\publish.ps1
+```
+3.  Stage the changes:
 ```powershell
 git add .
 ```
-3.  Commit the changes (e.g., using a conventional commit message):
+4.  Commit the changes (e.g., using a conventional commit message):
 ```powershell
 git commit -m "chore: bump version to x.y.z"
 ```
-4.  Create a Git tag for the new version:
+5.  Create a Git tag for the new version:
 ```powershell
 git tag vx.y.z
 ```
-5.  Push the commit and tag to the remote repository:
+6.  Push the commit and tag to the remote repository:
 ```powershell
 git push
 git push --tags
