@@ -31,7 +31,7 @@ jobs:
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Build the application
       run: |
-        dotnet publish .\src\AgentExcel\AgentExcel.csproj -c Release -r win-x64 --self-contained true -o .\skills\use-agent-excel\bin
+        powershell -ExecutionPolicy Bypass -File .\scripts\publish.ps1
 
     # Upload the MSIX package: https://github.com/marketplace/actions/upload-a-build-artifact
     - name: Upload build artifacts
