@@ -1354,23 +1354,6 @@ public class RangeService : ExcelServiceBase
         }
     }
 
-    private static Excel.Range GetRange(Excel.Worksheet ws, string rangeAddress)
-    {
-        if (string.IsNullOrWhiteSpace(rangeAddress))
-        {
-            throw new ArgumentException("Range address cannot be null or empty.", nameof(rangeAddress));
-        }
-
-        try
-        {
-            return ws.Range[rangeAddress];
-        }
-        catch (System.Runtime.InteropServices.COMException ex)
-        {
-            throw new ArgumentException($"Invalid Excel range address: '{rangeAddress}'. Ensure it follows a valid format (e.g., 'A1', 'A1:B2', 'A:B').", ex);
-        }
-    }
-
     private static string GetColumnLetter(int columnNumber)
     {
         int temp;

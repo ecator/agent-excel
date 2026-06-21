@@ -132,4 +132,26 @@ public abstract class ExcelServiceBase
             SafeReleaseComObject(sheets);
         }
     }
+
+    /// <summary>
+    /// Helper method to retrieve an Excel Range from a worksheet using the given address.
+    /// Throws descriptive ArgumentExceptions for null/empty addresses or COMException due to invalid range addresses.
+    /// </summary>
+    protected Excel.Range GetRange(Excel.Worksheet ws, string rangeAddress)
+    {
+        if (string.IsNullOrWhiteSpace(rangeAddress))
+        {
+            throw new ArgumentException("Range address cannot be null or empty.", nameof(rangeAddress));
+        }
+
+        try
+        {
+            return ws.Range[rangeAddress];
+        }
+        catch (System.Runtime.InteropServices.COMException ex)
+        {
+            throw new ArgumentException($"Invalid Excel range address: '{rangeAddress}'. Ensure it follows a valid format (e.g., 'A1', 'A1:B2', 'A:B').", ex);
+        }
+    }
 }
+

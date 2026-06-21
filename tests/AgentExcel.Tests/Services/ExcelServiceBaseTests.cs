@@ -51,6 +51,15 @@ public class ExcelServiceBaseTests : BaseTests
         Assert.That(() => _service!.PublicGetActiveWorkbook(), Throws.TypeOf<Exception>().And.Message.Contains("Excel is not running"));
     }
 
+    [Test]
+    public void GetRange_WithNullOrEmptyAddress_ThrowsArgumentException()
+    {
+        // Act & Assert
+        Assert.That(() => _service!.PublicGetRange(null!, null!), Throws.ArgumentException);
+        Assert.That(() => _service!.PublicGetRange(null!, string.Empty), Throws.ArgumentException);
+        Assert.That(() => _service!.PublicGetRange(null!, "   "), Throws.ArgumentException);
+    }
+
     private class FakeExcelConnectionProvider : IExcelConnectionProvider
     {
         public Excel.Application? GetApp(bool createNew = false) => null;
@@ -78,5 +87,11 @@ public class ExcelServiceBaseTests : BaseTests
         {
             return GetActiveWorkbook();
         }
+
+        public Excel.Range PublicGetRange(Excel.Worksheet ws, string rangeAddress)
+        {
+            return GetRange(ws, rangeAddress);
+        }
     }
 }
+
