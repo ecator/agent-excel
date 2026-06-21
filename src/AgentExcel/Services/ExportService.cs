@@ -11,27 +11,45 @@ public class ExportService : ExcelServiceBase
     {
     }
 
-    public void ExportRangeAsImage(string workbookName, string sheetName, string rangeAddress, string outputPath)
+    public void ExportRangeAsImage(string workbookName, string sheetName, string range, string outputFile)
     {
+        ValidateOutputFile(outputFile, ".png");
         ExecuteWithRetry(() =>
         {
             Excel.Workbook? wb = null;
             Excel.Worksheet? ws = null;
-            Excel.Range? range = null;
+            Excel.Range? xlRange = null;
             try
             {
                 wb = GetWorkbook(workbookName);
+
+                var app = GetApp();
+                if (app != null)
+                {
+                    app.ScreenUpdating = true;
+                }
+
                 ws = GetWorksheet(wb, sheetName);
-                range = ws.Range[rangeAddress];
-                range.CopyPicture(Excel.XlPictureAppearance.xlScreen, Excel.XlCopyPictureFormat.xlBitmap);
+
+                // Activate workbook and worksheet to ensure they have UI focus
+                wb.Activate();
+                ws.Activate();
+
+                xlRange = GetRange(ws, range);
+                xlRange.Select();
+                xlRange.CopyPicture(Excel.XlPictureAppearance.xlScreen, Excel.XlCopyPictureFormat.xlBitmap);
+
+                // Short delay to allow clipboard to populate
+                Thread.Sleep(100);
 
                 Excel.ChartObjects? charts = (Excel.ChartObjects)ws.ChartObjects();
-                Excel.ChartObject? co = charts.Add(0, 0, (double)range.Width, (double)range.Height);
+                Excel.ChartObject? co = charts.Add(0, 0, (double)xlRange.Width, (double)xlRange.Height);
                 Excel.Chart? chart = co.Chart;
                 try
                 {
+                    co.Activate();
                     chart.Paste();
-                    chart.Export(Path.GetFullPath(outputPath), "PNG");
+                    chart.Export(Path.GetFullPath(outputFile), "PNG");
                 }
                 finally
                 {
@@ -43,27 +61,54 @@ public class ExportService : ExcelServiceBase
             }
             finally
             {
-                SafeReleaseComObject(range);
+                SafeReleaseComObject(xlRange);
                 SafeReleaseComObject(ws);
                 SafeReleaseComObject(wb);
             }
         });
     }
 
-    public void ExportAsPdf(string workbookName, string outputPath)
+    public void ExportAsPdf(string workbookName, string outputFile)
     {
+        ValidateOutputFile(outputFile, ".pdf");
         ExecuteWithRetry(() =>
         {
             Excel.Workbook? wb = null;
             try
             {
                 wb = GetWorkbook(workbookName);
-                wb.ExportAsFixedFormat(Excel.XlFixedFormatType.xlTypePDF, Path.GetFullPath(outputPath));
+                wb.ExportAsFixedFormat(Excel.XlFixedFormatType.xlTypePDF, Path.GetFullPath(outputFile));
             }
             finally
             {
                 SafeReleaseComObject(wb);
             }
         });
+    }
+
+    private void ValidateOutputFile(string outputFile, string expectedExtension)
+    {
+        if (string.IsNullOrWhiteSpace(outputFile))
+        {
+            throw new ArgumentException("File path cannot be null or empty.", nameof(outputFile));
+        }
+
+        string extension = Path.GetExtension(outputFile);
+        if (string.IsNullOrEmpty(extension))
+        {
+            throw new ArgumentException("File path must have a valid extension.", nameof(outputFile));
+        }
+
+        string extLower = extension.ToLowerInvariant();
+        if (extLower != expectedExtension.ToLowerInvariant())
+        {
+            throw new ArgumentException($"Invalid file extension '{extension}'. Only {expectedExtension} is allowed.", nameof(outputFile));
+        }
+
+        string? directory = Path.GetDirectoryName(Path.GetFullPath(outputFile));
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            throw new DirectoryNotFoundException($"The directory '{directory}' does not exist.");
+        }
     }
 }

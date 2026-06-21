@@ -16,16 +16,16 @@ public static class ExportEndpoints
 
         export.MapPost("/range-image", (ExportImageRequest req, ExportService exportService) =>
         {
-            exportService.ExportRangeAsImage(req.Workbook, req.Sheet, req.RangeAddress, req.OutputPath);
-            return Results.Extensions.Yaml(new { status = "exported" });
+            exportService.ExportRangeAsImage(req.Workbook, req.Sheet, req.Range, req.OutputFile);
+            return Results.Text($"range[{req.Range}] has been exported to {req.OutputFile}", "text/plain; charset=utf-8");
         })
         .WithTags("Export")
         .WithSummary("Export a range as a PNG image");
 
         export.MapPost("/workbook-pdf", (ExportPdfRequest req, ExportService exportService) =>
         {
-            exportService.ExportAsPdf(req.Workbook, req.OutputPath);
-            return Results.Extensions.Yaml(new { status = "exported" });
+            exportService.ExportAsPdf(req.Workbook, req.OutputFile);
+            return Results.Text($"workbook[{req.Workbook}] has been exported to {req.OutputFile}", "text/plain; charset=utf-8");
         })
         .WithTags("Export")
         .WithSummary("Export the entire workbook as a PDF");

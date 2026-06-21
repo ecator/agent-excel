@@ -8,5 +8,5 @@ public record ExportPdfRequest : WorkbookRequestBase
     /// <summary>
     /// The absolute path where the PDF file will be saved.
     /// </summary>
-    public required string OutputPath { get; init; }
+    public required string OutputFile { get; init; }
 }

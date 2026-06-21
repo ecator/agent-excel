@@ -8,10 +8,10 @@ public record ExportImageRequest : WorksheetRequestBase
     /// <summary>
     /// The range address to export as an image (e.g., 'A1:D10').
     /// </summary>
-    public required string RangeAddress { get; init; }
+    public required string Range { get; init; }
 
     /// <summary>
     /// The absolute path where the image file will be saved.
     /// </summary>
-    public required string OutputPath { get; init; }
+    public required string OutputFile { get; init; }
 }
