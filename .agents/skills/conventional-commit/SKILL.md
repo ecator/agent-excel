@@ -7,8 +7,8 @@ description: 'Generating conventional commit messages'
 
 **Follow these steps:**
 
-1. Run `git -c color.status=false --no-pager status -s` to review changed files.
-2. Run `git --no-pager diff --staged --no-color` to inspect changes.
+1. Run `git --no-pager diff --staged --no-color` to inspect **only** the staged changes. **DO NOT** inspect or include changes that have not been added to the staging area (unstaged changes should be ignored).
+2. **DO NOT run any tests**. Testing is **NOT** required for generating the commit message.
 3. Construct your commit message using the following structure.
 
 **DO NOT RUN `git commit`**, you only print the commit message in a markdown code block unless the user explicitly requests you to run `git commit`.
