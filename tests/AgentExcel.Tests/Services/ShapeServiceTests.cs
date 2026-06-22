@@ -160,7 +160,7 @@ public class ShapeServiceTests : BaseTests
         var list = _service.ListShapes(_wbName, SheetName);
         // Should contain 3 shapes
         Assert.That(list, Has.Count.EqualTo(3));
-        
+
         var foundProcess = list.FirstOrDefault(s => s.Name == processShape.Name);
         Assert.That(foundProcess, Is.Not.Null);
         Assert.That(foundProcess!.Type, Is.EqualTo("FlowchartProcess"));
@@ -243,7 +243,7 @@ public class ShapeServiceTests : BaseTests
         // Act & Assert
         var ex = Assert.Throws<Exception>(() =>
             _service!.UpdateShape(_wbName, SheetName, "NonExistentShape", 15, 25, 60, 70, "Updated Text"));
-        
+
         Assert.That(ex.Message, Does.Contain("Shape 'NonExistentShape' not found"));
     }
 
@@ -253,7 +253,7 @@ public class ShapeServiceTests : BaseTests
         // Act & Assert
         var ex = Assert.Throws<Exception>(() =>
             _service!.DeleteShape(_wbName, SheetName, "NonExistentShape"));
-        
+
         Assert.That(ex.Message, Does.Contain("Shape 'NonExistentShape' not found"));
     }
 

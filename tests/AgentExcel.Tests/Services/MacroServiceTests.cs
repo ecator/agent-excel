@@ -1,9 +1,9 @@
-using AgentExcel.Services;
+using System.Collections.Generic;
+
 using AgentExcel.Models;
+using AgentExcel.Services;
 
 using NUnit.Framework;
-
-using System.Collections.Generic;
 
 namespace AgentExcel.Tests.Services;
 
