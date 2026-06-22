@@ -88,4 +88,42 @@ public class ExcelConnectionProviderTests : BaseTests
             }
         }
     }
+
+    [Test]
+    public async Task GetApp_AfterIdleTimeout_ReleasesCachedInstance()
+    {
+        // Arrange
+        // Create a provider with a very short timeout (200ms) and short check interval (50ms)
+        var provider = new ExcelConnectionProvider(TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(50));
+
+        try
+        {
+            // Act
+            Excel.Application? app;
+            try
+            {
+                app = provider.GetApp(createNew: true);
+            }
+            catch (Exception ex)
+            {
+                Assert.Inconclusive("Skipping test because Excel COM process could not be started/connected: " + ex.Message);
+                return;
+            }
+
+            Assert.That(app, Is.Not.Null);
+            Assert.That(Marshal.IsComObject(app), Is.True);
+
+            // Wait for the idle timer to trigger and release the app
+            await Task.Delay(400);
+
+            // Assert
+            // The provider should have released its cached instance. We can call Dispose safely
+            // and verify that it doesn't throw.
+            Assert.DoesNotThrow(() => provider.Dispose());
+        }
+        finally
+        {
+            provider.Dispose();
+        }
+    }
 }

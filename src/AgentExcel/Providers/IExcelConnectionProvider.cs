@@ -10,4 +10,10 @@ public interface IExcelConnectionProvider : IDisposable
     /// Safely releases a COM object if it is not null and is a valid COM object.
     /// </summary>
     void SafeReleaseComObject(object? obj);
+
+    /// <summary>
+    /// Notifies the provider of request/Excel activity to reset the idle timer.
+    /// </summary>
+    void NotifyActivity();
 }
+

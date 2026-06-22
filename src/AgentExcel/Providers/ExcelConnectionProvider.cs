@@ -22,6 +22,27 @@ public class ExcelConnectionProvider : IExcelConnectionProvider
     // Flag to track whether the provider instance has been disposed
     private bool _disposed;
 
+    // Timer to periodically check for inactivity and release Excel COM resources
+    private readonly Timer? _idleTimer;
+
+    // Timestamp of the last activity
+    private DateTime _lastActivityTime = DateTime.UtcNow;
+
+    // Inactivity timeout threshold
+    private readonly TimeSpan _idleTimeout;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExcelConnectionProvider"/> class.
+    /// </summary>
+    /// <param name="idleTimeout">The idle timeout after which Excel will be released. Defaults to 5 minutes.</param>
+    /// <param name="checkInterval">The interval at which the idle timer checks for inactivity. Defaults to 1 minute.</param>
+    public ExcelConnectionProvider(TimeSpan? idleTimeout = null, TimeSpan? checkInterval = null)
+    {
+        _idleTimeout = idleTimeout ?? TimeSpan.FromMinutes(5);
+        var interval = checkInterval ?? TimeSpan.FromMinutes(1);
+        _idleTimer = new Timer(CheckIdle, null, interval, interval);
+    }
+
     /// <summary>
     /// Retrieves the active or a newly created Excel Application instance.
     /// Uses double-check locking to ensure thread safety during lazy initialization.
@@ -34,6 +55,8 @@ public class ExcelConnectionProvider : IExcelConnectionProvider
     /// <exception cref="Exception">Thrown if <paramref name="createNew"/> is true but Excel fails to start.</exception>
     public Excel.Application? GetApp(bool createNew = false)
     {
+        NotifyActivity();
+
         if (_app != null)
         {
             if (createNew)
@@ -85,6 +108,15 @@ public class ExcelConnectionProvider : IExcelConnectionProvider
         }
     }
 
+    /// <inheritdoc />
+    public void NotifyActivity()
+    {
+        lock (_lock)
+        {
+            _lastActivityTime = DateTime.UtcNow;
+        }
+    }
+
     /// <summary>
     /// Gracefully releases cached Excel COM objects and disposes the provider.
     /// If there are no open workbooks, it attempts to close the Excel application.
@@ -101,6 +133,19 @@ public class ExcelConnectionProvider : IExcelConnectionProvider
             _disposed = true;
         }
 
+        // Dispose the timer outside the lock to avoid deadlock if timer callback is waiting on the lock
+        _idleTimer?.Dispose();
+
+        lock (_lock)
+        {
+            ReleaseAppInstance(quitIfNoWorkbooks: true);
+        }
+
+        GC.SuppressFinalize(this);
+    }
+
+    private void ReleaseAppInstance(bool quitIfNoWorkbooks)
+    {
         Excel.Application? app = _app;
         if (app != null)
         {
@@ -109,7 +154,7 @@ public class ExcelConnectionProvider : IExcelConnectionProvider
             {
                 // Retrieve the Workbooks collection to check if Excel can be closed safely
                 wbs = app.Workbooks;
-                if (wbs.Count == 0)
+                if (quitIfNoWorkbooks && wbs.Count == 0)
                 {
                     try
                     {
@@ -137,8 +182,27 @@ public class ExcelConnectionProvider : IExcelConnectionProvider
                 _app = null;
             }
         }
+    }
 
-        GC.SuppressFinalize(this);
+    private void CheckIdle(object? state)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        lock (_lock)
+        {
+            if (_app == null)
+            {
+                return;
+            }
+
+            if (DateTime.UtcNow - _lastActivityTime >= _idleTimeout)
+            {
+                ReleaseAppInstance(quitIfNoWorkbooks: true);
+            }
+        }
     }
 
     /// <inheritdoc />

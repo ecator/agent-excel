@@ -64,6 +64,7 @@ public class ExcelServiceBaseTests : BaseTests
     {
         public Excel.Application? GetApp(bool createNew = false) => null;
         public void SafeReleaseComObject(object? obj) { }
+        public void NotifyActivity() { }
         public void Dispose() { }
     }
 

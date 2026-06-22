@@ -52,6 +52,7 @@ What workbooks are currently open?
   - **Daemon**: A persistent background service holding the Excel COM object handles long-term, exposing local HTTP endpoints.
   - **Client**: A lightweight CLI trigger to start, stop, or check the status of the daemon.
 - **COM Safety**: Focuses on attaching to existing Excel instances and preventing memory leaks or zombie processes.
+- **Inactivity Release**: Automatically releases the Excel COM instance after 5 minutes of inactivity (no Excel requests). Before releasing, if no workbooks are open, it will also quit the Excel process. This prevents zombie background Excel processes from running indefinitely and blocking system shutdowns.
 
 ## Tech Stack
 
