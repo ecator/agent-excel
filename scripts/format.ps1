@@ -1,3 +1,2 @@
-dotnet format whitespace --no-restore -v q
-
-Write-Output "{`"decision`": `"ok`"}"
+$SolutionPath = Resolve-Path $(Join-Path $PSScriptRoot "..\AgentExcel.slnx")
+dotnet format $SolutionPath --no-restore -v n
