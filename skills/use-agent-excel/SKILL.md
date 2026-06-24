@@ -4,7 +4,7 @@ description: Use AgentExcel to handle Excel files
 license: MIT
 metadata:
   author: ecat
-  version: "0.3.1"
+  version: "0.3.2"
 ---
 
 # Use AgentExcel
