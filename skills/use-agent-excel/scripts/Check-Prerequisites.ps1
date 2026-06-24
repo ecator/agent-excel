@@ -66,5 +66,9 @@ if (-not (Test-Path -Path $exePath -PathType Leaf)) {
     exit 1
 }
 
-Write-Host "All prerequisites are satisfied. Excel is installed and AgentExcel.exe is present." -ForegroundColor Green
+$exeFullPath = Resolve-Path $exePath
+
+Write-Host "All prerequisites are satisfied." -ForegroundColor Green
+Write-Host "Excel is installed." -ForegroundColor Green
+Write-Host "AgentExcel.exe is present at `"$exeFullPath`"." -ForegroundColor Green
 exit 0
