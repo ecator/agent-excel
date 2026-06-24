@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -29,10 +30,21 @@ public static class CliCommandHandler
             Arguments = $"--run-server {finalPort}",
             UseShellExecute = false,
             CreateNoWindow = true,
-            WindowStyle = ProcessWindowStyle.Hidden
+            WindowStyle = ProcessWindowStyle.Hidden,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
         };
         var exeName = AppInfoHelper.GetExeName();
-        Process.Start(startInfo);
+        SetStandardHandlesInheritable(false);
+        try
+        {
+            Process.Start(startInfo);
+        }
+        finally
+        {
+            SetStandardHandlesInheritable(true);
+        }
         Console.WriteLine($"Server started at http://{listenHost}:{finalPort}");
         Console.WriteLine($"Swagger UI available at http://{listenHost}:{finalPort}/swagger/index.html");
         Console.WriteLine($"OpenAPI Specification available at http://{listenHost}:{finalPort}/swagger/v1/swagger.json");
@@ -266,6 +278,35 @@ public static class CliCommandHandler
         finally
         {
             localClient?.Dispose();
+        }
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr GetStdHandle(int nStdHandle);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetHandleInformation(IntPtr hObject, uint dwMask, uint dwFlags);
+
+    private const int STD_INPUT_HANDLE = -10;
+    private const int STD_OUTPUT_HANDLE = -11;
+    private const int STD_ERROR_HANDLE = -12;
+    private const uint HANDLE_FLAG_INHERIT = 0x00000001;
+
+    private static void SetStandardHandlesInheritable(bool inheritable)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+
+        int[] stdHandles = { STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE };
+        uint flags = inheritable ? HANDLE_FLAG_INHERIT : 0;
+
+        foreach (var stdHandle in stdHandles)
+        {
+            IntPtr handle = GetStdHandle(stdHandle);
+            if (handle != IntPtr.Zero && handle != new IntPtr(-1))
+            {
+                SetHandleInformation(handle, HANDLE_FLAG_INHERIT, flags);
+            }
         }
     }
 }
