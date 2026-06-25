@@ -59,6 +59,11 @@ AgentExcel.exe status
 ```powershell
 AgentExcel.exe start
 ```
+*Note*: If starting the daemon fails multiple times or the process is immediately terminated when the shell exits, it is likely due to Job Object limits. Use the WMI-based startup script instead:
+```powershell
+powershell -ExecutionPolicy Bypass -File "scripts\Start-Server.ps1"
+```
+
 
 ## API Documentation and Help
 
@@ -99,9 +104,15 @@ You can pass the JSON body as a direct argument or pipe it via standard input (s
 ```powershell
 AgentExcel.exe post /workbooks/open '{"path":"D:/path/to/your/workbook.xlsx"}'
 ```
+
 *   **Via standard input (stdin)** using `--stdin`:
 ```powershell
 '{"path":"D:/path/to/your/workbook.xlsx"}' | AgentExcel.exe post /workbooks/open --stdin
+```
+
+*Note*: If opening a workbook via the API fails or Excel immediately exits, it could be due to Job Object limits killing child processes. Use the WMI-based script to open the file first, then proceed:
+```powershell
+powershell -ExecutionPolicy Bypass -File "scripts\Open-File.ps1" "D:/path/to/your/workbook.xlsx"
 ```
 
 ## Stopping the Service
@@ -116,6 +127,7 @@ AgentExcel.exe stop
 
 *   **Startup Delay**: If the daemon has just started, but calling the `api` subcommand fails or reports the service is offline, wait 2–3 seconds for the HTTP server to fully bind, then try again.
 *   **Transient COM Connection Errors**: If you encounter errors like `Excel process started but failed to connect via COM.`, retry the command.
+*   **Job Object Restrictions & Subprocess Termination**: If you are running in an environment with Job Object limits (which automatically terminates all child processes started by the command line when the task or tool execution finishes), the daemon service may fail to start, or Excel may fail to open/remain open. If you experience repeated startup failures or Excel file opening failures, please use `scripts\Start-Server.ps1` and `scripts\Open-File.ps1` instead.
 *   **Chaining Operations**: To maximize efficiency, chain dependent tasks together in a single turn instead of executing them step-by-step. For instance, open a workbook and list its sheets sequentially:
 ```powershell
 # 1. Open the workbook
