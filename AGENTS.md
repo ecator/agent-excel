@@ -112,7 +112,11 @@ When writing C# code that operates on Excel COM, the AI must strictly follow the
 * **Build Script Requirement**: Do NOT run `dotnet build` directly to compile the project, as the executable might be occupied by running processes or during testing, causing compilation failures. You MUST use the `scripts/build.ps1` script, which stops any potentially running daemon processes before compiling.
 * **Test Script Requirement**: Do NOT run `dotnet test` directly to execute tests. You MUST use the `scripts/test.ps1` script instead. This script transparently forwards all arguments to `dotnet test`, meaning options like `--filter` are fully supported.
 * **Test Pre-requisite**: Before running `scripts/test.ps1` (or any testing commands), you MUST execute `scripts/build.ps1` once to ensure the latest code is successfully compiled and any blocking processes are terminated.
-* **Verification Scope**: After code modifications, you only need to compile with the build script and run tests via `scripts/test.ps1` to verify the changes. You do not need to run the compiled `.exe` executable to verify the execution results. Generally, verifying results is done by the user, unless the user explicitly specifies that you need to verify the results through the entire flow yourself.
+* **Verification Scope**: After code modifications, compile with `scripts/build.ps1` first. To verify the changes, **strictly avoid running full test suites unnecessarily**. You MUST target the scope of your changes:
+  * If the change is local to a specific component or service (e.g. `ExportService.cs`), run only that specific test class using: `scripts/test.ps1 --filter FullyQualifiedName~ExportServiceTests`
+  * If the change is pure logic/in-memory, rely on the default fast unit tests: `scripts/test.ps1 --filter Category=Unit` (which executes in < 1s without launching Excel).
+  * Only run all tests via `scripts/test.ps1` without filters when there are major architectural refactorings or when specifically requested.
+  * You do not need to run the compiled `.exe` executable to verify the execution results. Generally, verifying results is done by the user, unless the user explicitly specifies that you need to verify the results through the entire flow yourself.
 
 ## 10. Test Case Writing Standards
 To ensure software quality, correctness, and maintainability, all tests must follow these industry best practices:
@@ -172,7 +176,17 @@ If an integration test interacts with actual Office/Excel COM objects:
 * Ensure that no Excel background processes remain running after the test run.
 
 ### 10.7 Categorization
-* Use the `[Category]` attribute to classify tests:
-  * `[Category("Unit")]` for fast, lightweight in-memory unit tests that have no external dependencies.
-  * `[Category("Integration")]` for tests that interact with external services, files, or processes.
-  * `[Category("COM")]` for tests requiring Excel or other Office applications to be installed and running.
+All tests in this project must be explicitly categorized using the NUnit `[Category]` attribute on either the test class (preferred for entire suites) or individual test methods.
+
+#### Categorization Rules:
+1. **`[Category("Unit")]`**
+   * **Criteria**: Pure in-memory unit tests. They must run in < 1 second, contain no external dependencies, and **absolutely no COM references** (Excel must not be touched or launched).
+   * **Execution Command**: `scripts/test.ps1 --filter Category=Unit`
+
+2. **`[Category("Integration")]`**
+   * **Criteria**: Tests that interact with the physical file system, subprocesses, or external API integrations, but **do not** require Excel COM automation.
+   * **Execution Command**: `scripts/test.ps1 --filter Category=Integration`
+
+3. **`[Category("COM")]`**
+   * **Criteria**: Integration and E2E tests that interact directly with the Excel COM interop layer. These require Excel to be installed and running, are very heavy, and are time-consuming to execute.
+   * **Execution Command**: `scripts/test.ps1 --filter Category=COM`
