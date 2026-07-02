@@ -8,7 +8,13 @@ if (-not (Test-Path -Path $exePath -PathType Leaf)) {
     exit 1
 }
 $exeFullPath = Resolve-Path $exePath
-Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "`"$exeFullPath`" start" | Out-Null
+$CmdLine = "`"$exeFullPath`" start"
+if ($PSVersionTable.PSVersion.Major -lt 6) {
+    Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList $CmdLine | Out-Null
+}
+else {
+    Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine = $CmdLine } | Out-Null
+}
 
 Start-Sleep 3
 

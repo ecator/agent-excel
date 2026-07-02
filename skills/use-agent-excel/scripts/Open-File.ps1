@@ -8,7 +8,13 @@ if (-not (Test-Path -Path $File -PathType Leaf)) {
 }
 $cmd = "Start-Process `"$File`""
 $base64 = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cmd))
-Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "powershell -EncodedCommand $base64" | Out-Null
+$CmdLine = "powershell -EncodedCommand $base64"
+if ($PSVersionTable.PSVersion.Major -lt 6) {
+    Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList $CmdLine | Out-Null
+}
+else {
+    Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine = $CmdLine } | Out-Null
+}
 
 Start-Sleep 3
 
