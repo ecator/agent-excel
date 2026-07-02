@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 
 using AgentExcel.Models;
+using AgentExcel.Models.Requests;
 using AgentExcel.Services;
 
 using NUnit.Framework;
