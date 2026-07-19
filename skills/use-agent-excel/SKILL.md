@@ -3,8 +3,8 @@ name: use-agent-excel
 description: Use AgentExcel to handle Excel files
 license: MIT
 metadata:
-  author: ecat
-  version: "0.3.2"
+    author: ecat
+    version: "0.3.2"
 ---
 
 # Use AgentExcel
@@ -16,7 +16,7 @@ The architecture is outlined below:
 ```mermaid
 graph LR
     A[Agent]
-    
+
     subgraph Daemon ["AgentExcel Daemon Process"]
         B[Daemon HTTP Service]
         C[Excel COM Interop Layer]
@@ -43,27 +43,31 @@ powershell -ExecutionPolicy Bypass -File "scripts\Check-Prerequisites.ps1"
 
 ## Executable Path
 
-*   **Rule**: Always interact with Excel via the `AgentExcel.exe` CLI tool. Do **not** manipulate Excel files directly (e.g., using Python libraries like pandas or openpyxl) unless explicitly directed.
-*   **Path**: The executable is located in the `bin` directory of this skill. (The `Check-Prerequisites.ps1` script validates this location).
-*   **Execution**: Because the tool resides in `bin`, run all commands using its path relative to the workspace, for example: `.\skills\use-agent-excel\bin\AgentExcel.exe <command>`.
+- **Rule**: Always interact with Excel via the `AgentExcel.exe` CLI tool. Do **not** manipulate Excel files directly (e.g., using Python libraries like pandas or openpyxl) unless explicitly directed.
+- **Path**: The executable is located in the `bin` directory of this skill. (The `Check-Prerequisites.ps1` script validates this location).
+- **Execution**: Because the tool resides in `bin`, run all commands using its path relative to the workspace, for example: `.\skills\use-agent-excel\bin\AgentExcel.exe <command>`.
 
 ## Daemon Lifecycle Management
 
 Before sending any Excel API requests, you must ensure the background daemon service is running.
 
 1.  **Check Status**: Check if the service is already running by executing:
+
 ```powershell
 AgentExcel.exe status
 ```
+
 2.  **Start Daemon**: If the status indicates the daemon is not running, start it:
+
 ```powershell
 AgentExcel.exe start
 ```
-*Note*: If starting the daemon fails multiple times or the process is immediately terminated when the shell exits, it is likely due to Job Object limits. Use the WMI-based startup script instead:
+
+_Note_: If starting the daemon fails multiple times or the process is immediately terminated when the shell exits, it is likely due to Job Object limits. Use the WMI-based startup script instead:
+
 ```powershell
 powershell -ExecutionPolicy Bypass -File "scripts\Start-Server.ps1"
 ```
-
 
 ## API Documentation and Help
 
@@ -75,16 +79,16 @@ AgentExcel.exe api
 
 The `api` command supports two-level filtering (group and endpoint name) with wildcard/glob (`*`) matching:
 
-*   **Summary mode**: If no `endpoint` parameter is specified, it shows only the group names and the endpoint paths with their summary descriptions (excluding detailed body schemas):
-    *   `AgentExcel.exe api`: Lists all groups and endpoints' summaries.
-    *   `AgentExcel.exe api range`: Lists summaries only for endpoints in the `range` group.
-    *   `AgentExcel.exe api *`: Lists summaries for all endpoints across all groups.
-*   **Detailed mode**: If an `endpoint` parameter is specified, it prints the detailed documentation including the request body JSON schema:
-    *   `AgentExcel.exe api range /range/write`: Shows the detailed documentation for the `/range/write` endpoint (exact/suffix match).
-    *   `AgentExcel.exe api range write`: Shows the detailed documentation by matching the endpoint name without a leading slash (matches paths ending with `/write`, such as `/range/write`). **Note**: The matched endpoint path must belong to the specified group (in this case, `range`).
-    *   `AgentExcel.exe api range *write*`: Shows the detailed documentation for endpoints in the `range` group whose paths contain `write`.
-    *   `AgentExcel.exe api range *`: Shows details for all endpoints in the `range` group.
-    *   `AgentExcel.exe api * *`: Shows details for all endpoints across all groups.
+- **Summary mode**: If no `endpoint` parameter is specified, it shows only the group names and the endpoint paths with their summary descriptions (excluding detailed body schemas):
+    - `AgentExcel.exe api`: Lists all groups and endpoints' summaries.
+    - `AgentExcel.exe api range`: Lists summaries only for endpoints in the `range` group.
+    - `AgentExcel.exe api *`: Lists summaries for all endpoints across all groups.
+- **Detailed mode**: If an `endpoint` parameter is specified, it prints the detailed documentation including the request body JSON schema:
+    - `AgentExcel.exe api range /range/write`: Shows the detailed documentation for the `/range/write` endpoint (exact/suffix match).
+    - `AgentExcel.exe api range write`: Shows the detailed documentation by matching the endpoint name without a leading slash (matches paths ending with `/write`, such as `/range/write`). **Note**: The matched endpoint path must belong to the specified group (in this case, `range`).
+    - `AgentExcel.exe api range *write*`: Shows the detailed documentation for endpoints in the `range` group whose paths contain `write`.
+    - `AgentExcel.exe api range *`: Shows details for all endpoints in the `range` group.
+    - `AgentExcel.exe api * *`: Shows details for all endpoints across all groups.
 
 Note: Filtering is entirely case-insensitive.
 
@@ -93,24 +97,29 @@ Note: Filtering is entirely case-insensitive.
 Instead of using raw HTTP tools like `curl`, use the built-in `get` and `post` subcommands of `AgentExcel.exe` to query or modify Excel.
 
 ### 1. Simple Requests (Without Payload)
+
 ```powershell
 AgentExcel.exe post /workbooks/list
 ```
 
 ### 2. Request with Payload (JSON Body)
+
 You can pass the JSON body as a direct argument or pipe it via standard input (stdin):
 
-*   **Via argument**:
+- **Via argument**:
+
 ```powershell
 AgentExcel.exe post /workbooks/open '{"path":"D:/path/to/your/workbook.xlsx"}'
 ```
 
-*   **Via standard input (stdin)** using `--stdin`:
+- **Via standard input (stdin)** using `--stdin`:
+
 ```powershell
 '{"path":"D:/path/to/your/workbook.xlsx"}' | AgentExcel.exe post /workbooks/open --stdin
 ```
 
-*Note*: If opening a workbook via the API fails or Excel immediately exits, it could be due to Job Object limits killing child processes. Use the WMI-based script to open the file first, then proceed:
+_Note_: If opening a workbook via the API fails or Excel immediately exits, it could be due to Job Object limits killing child processes. Use the WMI-based script to open the file first, then proceed:
+
 ```powershell
 powershell -ExecutionPolicy Bypass -File "scripts\Open-File.ps1" "D:/path/to/your/workbook.xlsx"
 ```
@@ -125,20 +134,30 @@ AgentExcel.exe stop
 
 ## Important Guidelines & Troubleshooting
 
-*   **Startup Delay**: If the daemon has just started, but calling the `api` subcommand fails or reports the service is offline, wait 2–3 seconds for the HTTP server to fully bind, then try again.
-*   **Transient COM Connection Errors**: If you encounter errors like `Excel process started but failed to connect via COM.`, retry the command.
-*   **Job Object Restrictions & Subprocess Termination**: If you are running in an environment with Job Object limits (which automatically terminates all child processes started by the command line when the task or tool execution finishes), the daemon service may fail to start, or Excel may fail to open/remain open. If you experience repeated startup failures or Excel file opening failures, please use `scripts\Start-Server.ps1` and `scripts\Open-File.ps1` instead.
-*   **Chaining Operations**: To maximize efficiency, chain dependent tasks together in a single turn instead of executing them step-by-step. For instance, open a workbook and list its sheets sequentially:
+- **Startup Delay**: If the daemon has just started, but calling the `api` subcommand fails or reports the service is offline, wait 2–3 seconds for the HTTP server to fully bind, then try again.
+- **Transient COM Connection Errors**: If you encounter errors like `Excel process started but failed to connect via COM.`, retry the command.
+- **Job Object Restrictions & Subprocess Termination**: If you are running in an environment with Job Object limits (which automatically terminates all child processes started by the command line when the task or tool execution finishes), the daemon service may fail to start, or Excel may fail to open/remain open. If you experience repeated startup failures or Excel file opening failures, please use `scripts\Start-Server.ps1` and `scripts\Open-File.ps1` instead.
+- **Chaining Operations**: To maximize efficiency, chain dependent tasks together in a single turn instead of executing them step-by-step. For instance, open a workbook and list its sheets sequentially:
+
 ```powershell
 # 1. Open the workbook
 '{"path":"D:/path/to/your/workbook.xlsx"}' | AgentExcel.exe post /workbooks/open --stdin
 # 2. Immediately query its sheets using the workbook filename
 '{"workbook":"workbook.xlsx"}' | AgentExcel.exe post /sheets/list --stdin
 ```
-*   **Shared Excel Instance**: `AgentExcel` attaches to the Excel instance the user is actively working on. Any edits or selections you make will reflect in real-time on the user's screen. If the user asks you to modify "the file I am working on", query the open workbooks to find its name and operate on it directly without reopening it.
-*   **Cell Edit Mode Block**: If you receive an `RPC_E_CALL_REJECTED` error, it means Excel has blocked COM communication because the user is currently editing a cell. Prompt the user to exit edit mode (e.g., by pressing `Enter` or `Esc`) and try again.
-*   **PowerShell Character Encoding**: When running commands via PowerShell, run these commands first to prevent encoding/character corruption issues (especially with Chinese characters or file paths):
+
+- **Shared Excel Instance**: `AgentExcel` attaches to the Excel instance the user is actively working on. Any edits or selections you make will reflect in real-time on the user's screen. If the user asks you to modify "the file I am working on", query the open workbooks to find its name and operate on it directly without reopening it.
+- **Cell Edit Mode Block**: If you receive an `RPC_E_CALL_REJECTED` error, it means Excel has blocked COM communication because the user is currently editing a cell. Prompt the user to exit edit mode (e.g., by pressing `Enter` or `Esc`) and try again.
+- **🚨 CRITICAL: PowerShell Character Encoding**: When running commands via PowerShell, you MUST run these commands first to prevent encoding/character corruption issues (especially with Chinese characters or file paths). **If you do not do this, data loss or corruption may occur!**
+
 ```powershell
-[Console]::InputEncoding = [System.Text.Encoding]::UTF8
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.UTF8Encoding]::new()
+[console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+[console]::InputEncoding = [System.Text.UTF8Encoding]::new()
+```
+
+- **Handling Complex Request Bodies**: When passing a complex payload from a JSON file, read it using `Get-Content` with explicit UTF-8 encoding, and then pipe it into `AgentExcel.exe` using the `--stdin` flag.
+
+```powershell
+Get-Content -Raw -Encoding utf8 request.json | AgentExcel.exe post /range/write --stdin
 ```
