@@ -23,6 +23,7 @@ public static class SystemEndpoints
             return Results.Extensions.Yaml(new
             {
                 status = "running",
+                version = AppInfoHelper.GetAppVersion(),
                 pid = Process.GetCurrentProcess().Id,
                 port = port,
                 active_workbook = activeWorkbook,
