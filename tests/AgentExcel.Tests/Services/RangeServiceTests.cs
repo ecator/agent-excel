@@ -987,6 +987,98 @@ public class RangeServiceTests : BaseTests
             _service!.SetComment(_wbName!, "Sheet1", "A1:B2", "Test comment");
         });
     }
+
+    [Test]
+    [Category("COM")]
+    public void SetColumnWidth_WithValidWidth_UpdatesColumnWidthAndReturnsExpandedAddress()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        string sheetName = "Sheet1";
+        double targetWidth = 25.5;
+
+        // Act
+        var address = _service!.SetColumnWidth(_wbName!, sheetName, "B2:C4", targetWidth);
+
+        // Assert
+        Assert.That(address, Is.EqualTo("B:C"));
+        var app = s_provider!.GetApp(createNew: false);
+        Assert.That(app, Is.Not.Null);
+        var wb = app!.Workbooks[_wbName!];
+        var ws = (Excel.Worksheet)wb.Sheets[sheetName];
+        var cell = ws.Range["B2"];
+        Assert.That(Convert.ToDouble(cell.ColumnWidth), Is.EqualTo(targetWidth).Within(0.1));
+        ExcelConnector.SafeReleaseComObject(cell);
+        ExcelConnector.SafeReleaseComObject(ws);
+    }
+
+    [Test]
+    [Category("COM")]
+    public void SetRowHeight_WithValidHeight_UpdatesRowHeightAndReturnsExpandedAddress()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        string sheetName = "Sheet1";
+        double targetHeight = 30.0;
+
+        // Act
+        var address = _service!.SetRowHeight(_wbName!, sheetName, "B2:C4", targetHeight);
+
+        // Assert
+        Assert.That(address, Is.EqualTo("2:4"));
+        var app = s_provider!.GetApp(createNew: false);
+        Assert.That(app, Is.Not.Null);
+        var wb = app!.Workbooks[_wbName!];
+        var ws = (Excel.Worksheet)wb.Sheets[sheetName];
+        var cell = ws.Range["B2"];
+        Assert.That(Convert.ToDouble(cell.RowHeight), Is.EqualTo(targetHeight).Within(0.1));
+        ExcelConnector.SafeReleaseComObject(cell);
+        ExcelConnector.SafeReleaseComObject(ws);
+    }
+
+    [Test]
+    [Category("COM")]
+    public void AutoFit_WithValidInputs_ReturnsExpandedAddress()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        string sheetName = "Sheet1";
+        _service!.WriteRange(_wbName!, sheetName, "B2", "Test Content");
+
+        // Act & Assert
+        Assert.That(_service.AutoFit(_wbName!, sheetName, "B2:C4", "columns"), Is.EqualTo("B:C"));
+        Assert.That(_service.AutoFit(_wbName!, sheetName, "B2:C4", "rows"), Is.EqualTo("2:4"));
+        Assert.That(_service.AutoFit(_wbName!, sheetName, "B2:C4", "both"), Is.EqualTo("B:C,2:4"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void MergeAndUnmergeRange_WithValidInputs_MergesAndUnmergesRange()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        string sheetName = "Sheet1";
+
+        // Act - Merge
+        _service!.MergeRange(_wbName!, sheetName, "B2:C3");
+
+        // Assert - Check MergeCells
+        var app = s_provider!.GetApp(createNew: false);
+        Assert.That(app, Is.Not.Null);
+        var wb = app!.Workbooks[_wbName!];
+        var ws = (Excel.Worksheet)wb.Sheets[sheetName];
+        var range = ws.Range["B2:C3"];
+        Assert.That(Convert.ToBoolean(range.MergeCells), Is.True);
+
+        // Act - Unmerge
+        _service.UnmergeRange(_wbName!, sheetName, "B2:C3");
+
+        // Assert - Check MergeCells is False
+        Assert.That(Convert.ToBoolean(range.MergeCells), Is.False);
+
+        ExcelConnector.SafeReleaseComObject(range);
+        ExcelConnector.SafeReleaseComObject(ws);
+    }
 }
 
 

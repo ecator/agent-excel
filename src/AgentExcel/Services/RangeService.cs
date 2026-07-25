@@ -1538,6 +1538,201 @@ public class RangeService : ExcelServiceBase
         });
     }
 
+    public string AutoFit(string workbookName, string sheetName, string rangeAddress, string? target = null)
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? range = null;
+            Excel.Range? cols = null;
+            Excel.Range? rows = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                ws = GetWorksheet(wb, sheetName);
+                range = GetRange(ws, rangeAddress);
+
+                string normTarget = (target ?? "columns").Trim().ToLowerInvariant();
+
+                bool fixColumns = normTarget switch
+                {
+                    "column" or "columns" or "col" or "width" => true,
+                    "both" or "all" or "row_and_column" or "column_and_row" or "rows_and_columns" or "columns_and_rows" or "row_column" or "rowcolumn" => true,
+                    "row" or "rows" or "height" => false,
+                    _ => throw new ArgumentException($"Invalid autofit target '{target}'. Supported targets are 'columns', 'rows', or 'both'.")
+                };
+
+                bool fixRows = normTarget switch
+                {
+                    "row" or "rows" or "height" => true,
+                    "both" or "all" or "row_and_column" or "column_and_row" or "rows_and_columns" or "columns_and_rows" or "row_column" or "rowcolumn" => true,
+                    "column" or "columns" or "col" or "width" => false,
+                    _ => throw new ArgumentException($"Invalid autofit target '{target}'. Supported targets are 'columns', 'rows', or 'both'.")
+                };
+
+                string? colAddress = null;
+                string? rowAddress = null;
+
+                if (fixColumns)
+                {
+                    cols = range.EntireColumn;
+                    cols.AutoFit();
+                    colAddress = cols.get_Address(false, false);
+                }
+
+                if (fixRows)
+                {
+                    rows = range.EntireRow;
+                    rows.AutoFit();
+                    rowAddress = rows.get_Address(false, false);
+                }
+
+                if (fixColumns && fixRows)
+                {
+                    return $"{colAddress},{rowAddress}";
+                }
+                return colAddress ?? rowAddress ?? range.get_Address(false, false);
+            }
+            finally
+            {
+                SafeReleaseComObject(rows);
+                SafeReleaseComObject(cols);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+    public string SetColumnWidth(string workbookName, string sheetName, string rangeAddress, double width)
+    {
+        if (width < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(width), "Column width cannot be negative.");
+        }
+
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? range = null;
+            Excel.Range? cols = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                ws = GetWorksheet(wb, sheetName);
+                range = GetRange(ws, rangeAddress);
+                cols = range.EntireColumn;
+                cols.ColumnWidth = width;
+                return cols.get_Address(false, false);
+            }
+            finally
+            {
+                SafeReleaseComObject(cols);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+    public string SetRowHeight(string workbookName, string sheetName, string rangeAddress, double height)
+    {
+        if (height < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(height), "Row height cannot be negative.");
+        }
+
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? range = null;
+            Excel.Range? rows = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                ws = GetWorksheet(wb, sheetName);
+                range = GetRange(ws, rangeAddress);
+                rows = range.EntireRow;
+                rows.RowHeight = height;
+                return rows.get_Address(false, false);
+            }
+            finally
+            {
+                SafeReleaseComObject(rows);
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+    public void MergeRange(string workbookName, string sheetName, string rangeAddress, bool across = false)
+    {
+        ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? range = null;
+            var app = GetApp(createNew: false);
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                ws = GetWorksheet(wb, sheetName);
+                range = GetRange(ws, rangeAddress);
+
+                if (app != null)
+                {
+                    app.DisplayAlerts = false;
+                }
+
+                range.Merge(across);
+            }
+            finally
+            {
+                if (app != null)
+                {
+                    try
+                    {
+                        app.DisplayAlerts = true;
+                    }
+                    catch
+                    {
+                        // Ignore
+                    }
+                }
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+    public void UnmergeRange(string workbookName, string sheetName, string rangeAddress)
+    {
+        ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? range = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                ws = GetWorksheet(wb, sheetName);
+                range = GetRange(ws, rangeAddress);
+                range.UnMerge();
+            }
+            finally
+            {
+                SafeReleaseComObject(range);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
     private static string GetColumnLetter(int columnNumber)
     {
         int temp;

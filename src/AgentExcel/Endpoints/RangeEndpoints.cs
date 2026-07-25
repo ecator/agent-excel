@@ -179,6 +179,46 @@ public static class RangeEndpoints
         .WithTags("Range")
         .WithSummary("Set a dropdown list validation");
 
+        range.MapPost("/autofit", (AutoFitRequest req, RangeService rangeService) =>
+        {
+            var address = rangeService.AutoFit(req.Workbook, req.Sheet, req.Range, req.Target);
+            return Results.Text($"range[{address}] auto-fit completed");
+        })
+        .WithTags("Range")
+        .WithSummary("Auto-fit row height or column width (or both) for a range");
+
+        range.MapPost("/set-width", (SetWidthRequest req, RangeService rangeService) =>
+        {
+            var address = rangeService.SetColumnWidth(req.Workbook, req.Sheet, req.Range, req.Width);
+            return Results.Text($"column width of range[{address}] has been set to {req.Width}");
+        })
+        .WithTags("Range")
+        .WithSummary("Set column width of columns occupied by a range");
+
+        range.MapPost("/set-height", (SetHeightRequest req, RangeService rangeService) =>
+        {
+            var address = rangeService.SetRowHeight(req.Workbook, req.Sheet, req.Range, req.Height);
+            return Results.Text($"row height of range[{address}] has been set to {req.Height}");
+        })
+        .WithTags("Range")
+        .WithSummary("Set row height of rows occupied by a range");
+
+        range.MapPost("/merge", (MergeRangeRequest req, RangeService rangeService) =>
+        {
+            rangeService.MergeRange(req.Workbook, req.Sheet, req.Range, req.Across ?? false);
+            return Results.Text($"range[{req.Range}] has been merged");
+        })
+        .WithTags("Range")
+        .WithSummary("Merge a range");
+
+        range.MapPost("/unmerge", (UnmergeRangeRequest req, RangeService rangeService) =>
+        {
+            rangeService.UnmergeRange(req.Workbook, req.Sheet, req.Range);
+            return Results.Text($"range[{req.Range}] has been unmerged");
+        })
+        .WithTags("Range")
+        .WithSummary("Unmerge a range");
+
     }
 
     private static string FormatFindResults(List<FindResult> results, string action)
