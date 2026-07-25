@@ -174,6 +174,60 @@ public class ExportServiceTests : BaseTests
     }
 
     [Test]
+    public void ExportShapeAsImage_WithValidParameters_ExportsSuccessfully()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        var outputFile = Path.Combine(TestDataTempPath, "shape_export_test.png");
+        if (File.Exists(outputFile))
+        {
+            File.Delete(outputFile);
+        }
+
+        var shapeService = new ShapeService(s_provider!);
+        var shapeInfo = shapeService.AddShape(_wbName, "Sheet1", "Rectangle", 10, 10, 100, 50, "Test Shape");
+
+        // Act
+        _service!.ExportShapeAsImage(_wbName, "Sheet1", shapeInfo.Name, outputFile);
+
+        // Assert
+        Assert.That(File.Exists(outputFile), Is.True);
+        File.Delete(outputFile);
+    }
+
+    [Test]
+    public void ExportShapeAsImage_WithInvalidExtension_ThrowsArgumentException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        var outputFile = Path.Combine(TestDataTempPath, "shape_export_test.jpg");
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.ExportShapeAsImage(_wbName, "Sheet1", "SomeShape", outputFile);
+        });
+
+        Assert.That(ex!.Message, Contains.Substring("Only .png is allowed"));
+    }
+
+    [Test]
+    public void ExportShapeAsImage_WithNonExistentShape_ThrowsException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        var outputFile = Path.Combine(TestDataTempPath, "shape_export_test.png");
+
+        // Act & Assert
+        var ex = Assert.Throws<Exception>(() =>
+        {
+            _service!.ExportShapeAsImage(_wbName, "Sheet1", "NonExistentShapeName", outputFile);
+        });
+
+        Assert.That(ex!.Message, Contains.Substring("not found in worksheet"));
+    }
+
+    [Test]
     public void ExportAsPdf_WithValidParameters_ExportsSuccessfully()
     {
         // Arrange

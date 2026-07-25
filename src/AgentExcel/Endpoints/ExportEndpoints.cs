@@ -23,6 +23,14 @@ public static class ExportEndpoints
         .WithTags("Export")
         .WithSummary("Export a range as a PNG image");
 
+        export.MapPost("/shape-image", (ExportShapeRequest req, ExportService exportService) =>
+        {
+            exportService.ExportShapeAsImage(req.Workbook, req.Sheet, req.ShapeName, req.OutputFile);
+            return Results.Text($"shape[{req.ShapeName}] has been exported to {req.OutputFile}", "text/plain; charset=utf-8");
+        })
+        .WithTags("Export")
+        .WithSummary("Export a shape, picture, or textbox as a PNG image");
+
         export.MapPost("/workbook-pdf", (ExportPdfRequest req, ExportService exportService) =>
         {
             exportService.ExportAsPdf(req.Workbook, req.OutputFile);

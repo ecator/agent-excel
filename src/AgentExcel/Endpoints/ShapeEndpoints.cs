@@ -18,7 +18,7 @@ public static class ShapeEndpoints
         shapes.MapPost("/list", (WorksheetRequest req, ShapeService shapeService) =>
             Results.Extensions.Yaml(shapeService.ListShapes(req.Workbook, req.Sheet)))
             .WithTags("Shapes")
-            .WithSummary("List all shapes and textboxes in a sheet");
+            .WithSummary("List all shapes (autoshapes, pictures, textboxes, connectors) in a sheet");
 
         shapes.MapPost("/add", (AddShapeRequest req, ShapeService shapeService) =>
             Results.Extensions.Yaml(shapeService.AddShape(req.Workbook, req.Sheet, req.Type, req.Left, req.Top, req.Width, req.Height, req.Text)))
@@ -51,6 +51,6 @@ public static class ShapeEndpoints
             return Results.Text(message, "text/plain; charset=utf-8");
         })
         .WithTags("Shapes")
-        .WithSummary("Delete a shape");
+        .WithSummary("Delete a shape, picture, or textbox");
     }
 }

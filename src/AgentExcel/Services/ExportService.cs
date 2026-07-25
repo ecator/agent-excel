@@ -68,6 +68,73 @@ public class ExportService : ExcelServiceBase
         });
     }
 
+    public void ExportShapeAsImage(string workbookName, string sheetName, string shapeName, string outputFile)
+    {
+        ValidateOutputFile(outputFile, ".png");
+        ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Shapes? shapes = null;
+            Excel.Shape? shape = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+
+                var app = GetApp();
+                if (app != null)
+                {
+                    app.ScreenUpdating = true;
+                }
+
+                ws = GetWorksheet(wb, sheetName);
+
+                // Activate workbook and worksheet to ensure they have UI focus
+                wb.Activate();
+                ws.Activate();
+
+                shapes = ws.Shapes;
+                try
+                {
+                    shape = shapes.Item(shapeName);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Shape '{shapeName}' not found in worksheet '{ws.Name}'.", ex);
+                }
+
+                shape.CopyPicture(Excel.XlPictureAppearance.xlScreen, Excel.XlCopyPictureFormat.xlBitmap);
+
+                // Short delay to allow clipboard to populate
+                Thread.Sleep(100);
+
+                Excel.ChartObjects? charts = (Excel.ChartObjects)ws.ChartObjects();
+                Excel.ChartObject? co = charts.Add(0, 0, (double)shape.Width, (double)shape.Height);
+                Excel.Chart? chart = co.Chart;
+                try
+                {
+                    co.Activate();
+                    chart.Paste();
+                    chart.Export(Path.GetFullPath(outputFile), "PNG");
+                }
+                finally
+                {
+                    co.Delete();
+                    SafeReleaseComObject(chart);
+                    SafeReleaseComObject(co);
+                    SafeReleaseComObject(charts);
+                }
+            }
+            finally
+            {
+                SafeReleaseComObject(shape);
+                SafeReleaseComObject(shapes);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
     public void ExportAsPdf(string workbookName, string outputFile)
     {
         ValidateOutputFile(outputFile, ".pdf");
