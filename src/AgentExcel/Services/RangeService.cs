@@ -875,6 +875,101 @@ public class RangeService : ExcelServiceBase
         });
     }
 
+    public string Delete(string workbookName, string sheetName, string? rangeAddress, string? shiftOption)
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? excelRange = null;
+            try
+            {
+                wb = GetWorkbook(workbookName, createNew: true);
+                ws = GetWorksheet(wb, sheetName);
+
+                if (string.IsNullOrWhiteSpace(rangeAddress))
+                {
+                    excelRange = ws.UsedRange;
+                }
+                else
+                {
+                    excelRange = GetRange(ws, rangeAddress);
+                }
+
+                if (excelRange == null)
+                {
+                    throw new InvalidOperationException("Target range could not be determined.");
+                }
+
+                string address = excelRange.get_Address();
+                string shift = (shiftOption ?? "").Trim().ToLowerInvariant();
+
+                switch (shift)
+                {
+                    case "":
+                    case "default":
+                        excelRange.Delete();
+                        break;
+                    case "shift_left":
+                    case "shiftleft":
+                    case "left":
+                    case "xlshiftoleft":
+                        excelRange.Delete(Excel.XlDeleteShiftDirection.xlShiftToLeft);
+                        break;
+                    case "shift_up":
+                    case "shiftup":
+                    case "up":
+                    case "xlshiftup":
+                        excelRange.Delete(Excel.XlDeleteShiftDirection.xlShiftUp);
+                        break;
+                    case "entire_row":
+                    case "entirerow":
+                    case "row":
+                        Excel.Range? entireRow = null;
+                        try
+                        {
+                            entireRow = excelRange.EntireRow;
+                            address = entireRow.get_Address();
+                            entireRow.Delete();
+                        }
+                        finally
+                        {
+                            SafeReleaseComObject(entireRow);
+                        }
+                        break;
+                    case "entire_column":
+                    case "entire_col":
+                    case "entirecolumn":
+                    case "column":
+                    case "col":
+                        Excel.Range? entireCol = null;
+                        try
+                        {
+                            entireCol = excelRange.EntireColumn;
+                            address = entireCol.get_Address();
+                            entireCol.Delete();
+                        }
+                        finally
+                        {
+                            SafeReleaseComObject(entireCol);
+                        }
+                        break;
+                    default:
+                        throw new ArgumentException($"Invalid shift option '{shiftOption}'. Supported options are: shift_left, shift_up, entire_row, entire_column.");
+                }
+
+                return address;
+            }
+            finally
+            {
+                SafeReleaseComObject(excelRange);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+
     public void SetStyle(string workbookName, string sheetName, string rangeAddress, CellStyle style)
     {
         ExecuteWithRetry(() =>

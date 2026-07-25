@@ -836,6 +836,113 @@ public class RangeServiceTests : BaseTests
 
         Assert.That(ex!.Message, Contains.Substring("Invalid Excel range address"));
     }
+
+    [Test]
+    [Category("COM")]
+    public void Delete_WithShiftLeft_DeletesRangeAndShiftsLeft()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "A1_val");
+        _service.WriteRange(_wbName, "Sheet1", "B1", "B1_val");
+        _service.WriteRange(_wbName, "Sheet1", "C1", "C1_val");
+
+        // Act
+        var address = _service.Delete(_wbName, "Sheet1", "A1", "shift_left");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$A$1"));
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1:B1");
+        Assert.That(results["A1"]?.ToString(), Is.EqualTo("B1_val"));
+        Assert.That(results["B1"]?.ToString(), Is.EqualTo("C1_val"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Delete_WithShiftUp_DeletesRangeAndShiftsUp()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "A1_val");
+        _service.WriteRange(_wbName, "Sheet1", "A2", "A2_val");
+        _service.WriteRange(_wbName, "Sheet1", "A3", "A3_val");
+
+        // Act
+        var address = _service.Delete(_wbName, "Sheet1", "A1", "shift_up");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$A$1"));
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1:A2");
+        Assert.That(results["A1"]?.ToString(), Is.EqualTo("A2_val"));
+        Assert.That(results["A2"]?.ToString(), Is.EqualTo("A3_val"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Delete_WithEntireRow_DeletesEntireRow()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Row1");
+        _service.WriteRange(_wbName, "Sheet1", "A2", "Row2");
+
+        // Act
+        var address = _service.Delete(_wbName, "Sheet1", "A1", "entire_row");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$1:$1"));
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1");
+        Assert.That(results["A1"]?.ToString(), Is.EqualTo("Row2"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Delete_WithEntireColumn_DeletesEntireColumn()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Col1");
+        _service.WriteRange(_wbName, "Sheet1", "B1", "Col2");
+
+        // Act
+        var address = _service.Delete(_wbName, "Sheet1", "A1", "entire_column");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$A:$A"));
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1");
+        Assert.That(results["A1"]?.ToString(), Is.EqualTo("Col2"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Delete_WithInvalidShift_ThrowsArgumentException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.Delete(_wbName, "Sheet1", "A1", "invalid_shift");
+        });
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Delete_WhenRangeIsInvalid_ThrowsFriendlyException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.Delete(_wbName, "Sheet1", "InvalidRangeAddress!!!", "shift_up");
+        });
+
+        Assert.That(ex!.Message, Contains.Substring("Invalid Excel range address"));
+    }
 }
+
 
 

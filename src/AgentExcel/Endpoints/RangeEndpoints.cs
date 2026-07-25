@@ -130,6 +130,15 @@ public static class RangeEndpoints
         .WithTags("Range")
         .WithSummary("Clear range (All, Formats, Contents, Comments, Hyperlinks)");
 
+        range.MapPost("/delete", (DeleteRangeRequest req, RangeService dataService) =>
+        {
+            var address = dataService.Delete(req.Workbook, req.Sheet, req.Range, req.Shift);
+            return Results.Text($"range[{address}] has been deleted");
+        })
+        .WithTags("Range")
+        .WithSummary("Delete range with shift options (shift_left, shift_up, entire_row, entire_column)");
+
+
         range.MapPost("/get-selection", (WorksheetRequest req, RangeService dataService) =>
         {
             var address = dataService.GetSelection(req.Workbook, req.Sheet);
