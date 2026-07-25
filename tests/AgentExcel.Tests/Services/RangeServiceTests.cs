@@ -942,6 +942,51 @@ public class RangeServiceTests : BaseTests
 
         Assert.That(ex!.Message, Contains.Substring("Invalid Excel range address"));
     }
+
+    [Test]
+    [Category("COM")]
+    public void SetComment_And_GetComments_SuccessfullyManagesComments()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        string sheetName = "Sheet1";
+
+        // Act - Set initial comment
+        _service!.SetComment(_wbName, sheetName, "B2", "First comment text", visible: true);
+
+        // Assert - Get comments
+        var comments = _service.GetComments(_wbName, sheetName);
+        var targetComment = comments.FirstOrDefault(c => c.Address == "B2");
+
+        Assert.That(targetComment, Is.Not.Null);
+        Assert.That(targetComment!.Text, Contains.Substring("First comment text"));
+        Assert.That(targetComment.Visible, Is.True);
+
+        // Act - Overwrite comment
+        _service.SetComment(_wbName, sheetName, "B2", "Updated comment text", visible: false);
+
+        // Assert - Verify overwritten comment
+        var updatedComments = _service.GetComments(_wbName, sheetName);
+        var updatedTarget = updatedComments.FirstOrDefault(c => c.Address == "B2");
+
+        Assert.That(updatedTarget, Is.Not.Null);
+        Assert.That(updatedTarget!.Text, Contains.Substring("Updated comment text"));
+        Assert.That(updatedTarget.Visible, Is.False);
+    }
+
+    [Test]
+    [Category("COM")]
+    public void SetComment_WhenRangeIsMultipleCells_ThrowsArgumentException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.SetComment(_wbName!, "Sheet1", "A1:B2", "Test comment");
+        });
+    }
 }
 
 

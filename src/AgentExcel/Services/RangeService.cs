@@ -1449,6 +1449,95 @@ public class RangeService : ExcelServiceBase
         }
     }
 
+    public List<CommentInfo> GetComments(string workbookName, string sheetName)
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Comments? comments = null;
+            var results = new List<CommentInfo>();
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                ws = GetWorksheet(wb, sheetName);
+                comments = ws.Comments;
+
+                foreach (Excel.Comment comment in comments)
+                {
+                    Excel.Range? parentCell = null;
+                    try
+                    {
+                        parentCell = (Excel.Range)comment.Parent;
+                        string address = parentCell.get_Address(false, false);
+                        bool visible = comment.Visible;
+                        string author = comment.Author;
+                        string text = comment.Text();
+
+                        results.Add(new CommentInfo(address, visible, author, text));
+                    }
+                    finally
+                    {
+                        SafeReleaseComObject(parentCell);
+                        SafeReleaseComObject(comment);
+                    }
+                }
+
+                return results;
+            }
+            finally
+            {
+                SafeReleaseComObject(comments);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
+    public void SetComment(string workbookName, string sheetName, string rangeAddress, string text, bool? visible = null)
+    {
+        ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? excelRange = null;
+            Excel.Comment? comment = null;
+            try
+            {
+                wb = GetWorkbook(workbookName);
+                ws = GetWorksheet(wb, sheetName);
+                excelRange = GetRange(ws, rangeAddress);
+
+                if (excelRange.Count > 1)
+                {
+                    throw new ArgumentException($"Setting a comment is only supported for a single cell, but range '{rangeAddress}' contains multiple cells.");
+                }
+
+                comment = excelRange.Comment;
+                if (comment != null)
+                {
+                    comment.Delete();
+                    SafeReleaseComObject(comment);
+                    comment = null;
+                }
+
+                comment = excelRange.AddComment(text);
+
+                if (visible.HasValue)
+                {
+                    comment.Visible = visible.Value;
+                }
+            }
+            finally
+            {
+                SafeReleaseComObject(comment);
+                SafeReleaseComObject(excelRange);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
+
     private static string GetColumnLetter(int columnNumber)
     {
         int temp;

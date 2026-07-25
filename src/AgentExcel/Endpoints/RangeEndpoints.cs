@@ -138,6 +138,22 @@ public static class RangeEndpoints
         .WithTags("Range")
         .WithSummary("Delete range with shift options (shift_left, shift_up, entire_row, entire_column)");
 
+        range.MapPost("/get-comments", (GetCommentsRequest req, RangeService dataService) =>
+        {
+            var results = dataService.GetComments(req.Workbook, req.Sheet);
+            return results.Count > 0 ? Results.Extensions.Yaml(results) : Results.Extensions.Yaml(null);
+        })
+        .WithTags("Range")
+        .WithSummary("List all comments in a sheet");
+
+        range.MapPost("/set-comment", (SetCommentRequest req, RangeService dataService) =>
+        {
+            dataService.SetComment(req.Workbook, req.Sheet, req.Range, req.Text, req.Visible);
+            return Results.Text($"comment of range[{req.Range}] has been set");
+        })
+        .WithTags("Range")
+        .WithSummary("Set comment for a specified range (overwrites existing comment)");
+
 
         range.MapPost("/get-selection", (WorksheetRequest req, RangeService dataService) =>
         {
