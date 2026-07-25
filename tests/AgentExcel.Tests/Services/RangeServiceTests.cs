@@ -945,6 +945,108 @@ public class RangeServiceTests : BaseTests
 
     [Test]
     [Category("COM")]
+    public void Insert_WithShiftRight_InsertsRangeAndShiftsRight()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "A1_val");
+
+        // Act
+        var address = _service.Insert(_wbName, "Sheet1", "A1", "shift_right");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$A$1"));
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1:B1");
+        Assert.That(results.GetValueOrDefault("A1")?.ToString(), Is.Null.Or.Empty);
+        Assert.That(results.GetValueOrDefault("B1")?.ToString(), Is.EqualTo("A1_val"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Insert_WithShiftDown_InsertsRangeAndShiftsDown()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "A1_val");
+
+        // Act
+        var address = _service.Insert(_wbName, "Sheet1", "A1", "shift_down");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$A$1"));
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1:A2");
+        Assert.That(results.GetValueOrDefault("A1")?.ToString(), Is.Null.Or.Empty);
+        Assert.That(results.GetValueOrDefault("A2")?.ToString(), Is.EqualTo("A1_val"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Insert_WithEntireRow_InsertsEntireRow()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Row1_val");
+
+        // Act
+        var address = _service.Insert(_wbName, "Sheet1", "A1", "entire_row");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$1:$1"));
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1:A2");
+        Assert.That(results.GetValueOrDefault("A1")?.ToString(), Is.Null.Or.Empty);
+        Assert.That(results.GetValueOrDefault("A2")?.ToString(), Is.EqualTo("Row1_val"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Insert_WithEntireColumn_InsertsEntireColumn()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+        _service!.WriteRange(_wbName, "Sheet1", "A1", "Col1_val");
+
+        // Act
+        var address = _service.Insert(_wbName, "Sheet1", "A1", "entire_column");
+
+        // Assert
+        Assert.That(address, Is.EqualTo("$A:$A"));
+        var results = _service.ReadRange(_wbName, "Sheet1", "A1:B1");
+        Assert.That(results.GetValueOrDefault("A1")?.ToString(), Is.Null.Or.Empty);
+        Assert.That(results.GetValueOrDefault("B1")?.ToString(), Is.EqualTo("Col1_val"));
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Insert_WithInvalidShift_ThrowsArgumentException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.Insert(_wbName, "Sheet1", "A1", "invalid_shift");
+        });
+    }
+
+    [Test]
+    [Category("COM")]
+    public void Insert_WhenRangeIsInvalid_ThrowsFriendlyException()
+    {
+        // Arrange
+        Assert.That(_wbName, Is.Not.Null);
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+        {
+            _service!.Insert(_wbName, "Sheet1", "InvalidRangeAddress!!!", "shift_down");
+        });
+
+        Assert.That(ex!.Message, Contains.Substring("Invalid Excel range address"));
+    }
+
+    [Test]
+    [Category("COM")]
     public void SetComment_And_GetComments_SuccessfullyManagesComments()
     {
         // Arrange

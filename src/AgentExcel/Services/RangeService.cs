@@ -969,6 +969,99 @@ public class RangeService : ExcelServiceBase
         });
     }
 
+    public string Insert(string workbookName, string sheetName, string? rangeAddress, string? shiftOption)
+    {
+        return ExecuteWithRetry(() =>
+        {
+            Excel.Workbook? wb = null;
+            Excel.Worksheet? ws = null;
+            Excel.Range? excelRange = null;
+            try
+            {
+                wb = GetWorkbook(workbookName, createNew: true);
+                ws = GetWorksheet(wb, sheetName);
+
+                if (string.IsNullOrWhiteSpace(rangeAddress))
+                {
+                    excelRange = ws.UsedRange;
+                }
+                else
+                {
+                    excelRange = GetRange(ws, rangeAddress);
+                }
+
+                if (excelRange == null)
+                {
+                    throw new InvalidOperationException("Target range could not be determined.");
+                }
+
+                string address = excelRange.get_Address();
+                string shift = (shiftOption ?? "").Trim().ToLowerInvariant();
+
+                switch (shift)
+                {
+                    case "":
+                    case "default":
+                        excelRange.Insert();
+                        break;
+                    case "shift_right":
+                    case "shiftright":
+                    case "right":
+                    case "xlshifttoright":
+                        excelRange.Insert(Excel.XlInsertShiftDirection.xlShiftToRight);
+                        break;
+                    case "shift_down":
+                    case "shiftdown":
+                    case "down":
+                    case "xlshiftdown":
+                        excelRange.Insert(Excel.XlInsertShiftDirection.xlShiftDown);
+                        break;
+                    case "entire_row":
+                    case "entirerow":
+                    case "row":
+                        Excel.Range? entireRow = null;
+                        try
+                        {
+                            entireRow = excelRange.EntireRow;
+                            address = entireRow.get_Address();
+                            entireRow.Insert();
+                        }
+                        finally
+                        {
+                            SafeReleaseComObject(entireRow);
+                        }
+                        break;
+                    case "entire_column":
+                    case "entire_col":
+                    case "entirecolumn":
+                    case "column":
+                    case "col":
+                        Excel.Range? entireCol = null;
+                        try
+                        {
+                            entireCol = excelRange.EntireColumn;
+                            address = entireCol.get_Address();
+                            entireCol.Insert();
+                        }
+                        finally
+                        {
+                            SafeReleaseComObject(entireCol);
+                        }
+                        break;
+                    default:
+                        throw new ArgumentException($"Invalid shift option '{shiftOption}'. Supported options are: shift_right, shift_down, entire_row, entire_column.");
+                }
+
+                return address;
+            }
+            finally
+            {
+                SafeReleaseComObject(excelRange);
+                SafeReleaseComObject(ws);
+                SafeReleaseComObject(wb);
+            }
+        });
+    }
 
     public void SetStyle(string workbookName, string sheetName, string rangeAddress, CellStyle style)
     {

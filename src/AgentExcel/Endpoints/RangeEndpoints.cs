@@ -138,6 +138,14 @@ public static class RangeEndpoints
         .WithTags("Range")
         .WithSummary("Delete range with shift options (shift_left, shift_up, entire_row, entire_column)");
 
+        range.MapPost("/insert", (InsertRangeRequest req, RangeService rangeService) =>
+        {
+            var address = rangeService.Insert(req.Workbook, req.Sheet, req.Range, req.Shift);
+            return Results.Text($"range[{address}] has been inserted");
+        })
+        .WithTags("Range")
+        .WithSummary("Insert cells, rows, or columns with shift options (shift_right, shift_down, entire_row, entire_column)");
+
         range.MapPost("/get-comments", (GetCommentsRequest req, RangeService rangeService) =>
         {
             var results = rangeService.GetComments(req.Workbook, req.Sheet);
