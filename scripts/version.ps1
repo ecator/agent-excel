@@ -56,10 +56,11 @@ else {
 # 2. Update skills/use-agent-excel/SKILL.md
 if (Test-Path $skillMdPath) {
     $skillMdContent = [System.IO.File]::ReadAllText($skillMdPath, $utf8NoBom)
-    $skillMdVersionPattern = '(?m)^  version:\s*"([^"]+)"'
+    $skillMdVersionPattern = '(?m)^( +version:\s*)"([^"]+)"'
     if ($skillMdContent -match $skillMdVersionPattern) {
-        $oldVersion = $Matches[1]
-        $skillMdContent = $skillMdContent -replace $skillMdVersionPattern, "  version: `"$Version`""
+        $versionTag = $Matches[1]
+        $oldVersion = $Matches[2]
+        $skillMdContent = $skillMdContent -replace $skillMdVersionPattern, "${versionTag}`"$Version`""
         [System.IO.File]::WriteAllText($skillMdPath, $skillMdContent, $utf8NoBom)
         Write-Host "Updated SKILL.md version from '$oldVersion' to '$Version'"
     }
