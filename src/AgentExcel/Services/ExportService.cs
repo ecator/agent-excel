@@ -11,10 +11,10 @@ public class ExportService : ExcelServiceBase
     {
     }
 
-    public void ExportRangeAsImage(string workbookName, string sheetName, string rangeAddress, string outputFile)
+    public string ExportRangeAsImage(string workbookName, string sheetName, string? rangeAddress, string outputFile)
     {
         ValidateOutputFile(outputFile, ".png");
-        ExecuteWithRetry(() =>
+        return ExecuteWithRetry(() =>
         {
             Excel.Workbook? wb = null;
             Excel.Worksheet? ws = null;
@@ -35,7 +35,8 @@ public class ExportService : ExcelServiceBase
                 wb.Activate();
                 ws.Activate();
 
-                xlRange = GetRange(ws, rangeAddress);
+                xlRange = string.IsNullOrEmpty(rangeAddress) ? ws.UsedRange : GetRange(ws, rangeAddress);
+                string exportedAddress = xlRange.get_Address(false, false);
                 xlRange.Select();
                 xlRange.CopyPicture(Excel.XlPictureAppearance.xlScreen, Excel.XlCopyPictureFormat.xlBitmap);
 
@@ -58,6 +59,8 @@ public class ExportService : ExcelServiceBase
                     SafeReleaseComObject(co);
                     SafeReleaseComObject(charts);
                 }
+
+                return exportedAddress;
             }
             finally
             {

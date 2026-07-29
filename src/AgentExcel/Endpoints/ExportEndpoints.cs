@@ -17,11 +17,11 @@ public static class ExportEndpoints
 
         export.MapPost("/range-image", (ExportImageRequest req, ExportService exportService) =>
         {
-            exportService.ExportRangeAsImage(req.Workbook, req.Sheet, req.Range, req.OutputFile);
-            return Results.Text($"range[{req.Range}] has been exported to {req.OutputFile}", "text/plain; charset=utf-8");
+            var exportedAddress = exportService.ExportRangeAsImage(req.Workbook, req.Sheet, req.Range, req.OutputFile);
+            return Results.Text($"range[{exportedAddress}] has been exported to {req.OutputFile}", "text/plain; charset=utf-8");
         })
         .WithTags("Export")
-        .WithSummary("Export a range as a PNG image");
+        .WithSummary("Export a range as a PNG image. If range is not specified, exports the UsedRange.");
 
         export.MapPost("/shape-image", (ExportShapeRequest req, ExportService exportService) =>
         {

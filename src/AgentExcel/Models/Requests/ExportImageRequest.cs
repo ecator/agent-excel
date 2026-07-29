@@ -6,9 +6,9 @@ namespace AgentExcel.Models.Requests;
 public record ExportImageRequest : WorksheetRequestBase
 {
     /// <summary>
-    /// The range address to export as an image (e.g., 'A1:D10').
+    /// The range address to export as an image (e.g., 'A1:D10'). If not specified, it will use the UsedRange.
     /// </summary>
-    public required string Range { get; init; }
+    public string? Range { get; init; }
 
     /// <summary>
     /// The absolute path where the image file will be saved.
