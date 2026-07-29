@@ -99,6 +99,7 @@ When writing C# code that operates on Excel COM, the AI must strictly follow the
     * ✅ Correct: Declare variables separately, e.g., `Excel.Workbook wb = excelApp.ActiveWorkbook;`.
 4.  **Explicit Manual Release**: All explicitly declared COM objects (Application, Workbook, Worksheet, Range) must be freed using `SafeReleaseComObject(obj)` before completing usage or returning from HTTP endpoints.
     * *Note on `SafeReleaseComObject`*: This helper method ensures the target object is non-null and is a valid COM reference (`Marshal.IsComObject`) before invoking `Marshal.ReleaseComObject`, safely wrapping the release call in a `try-catch` block to suppress any potential exceptions and prevent application crashes during cleanups.
+5.  **Prefer Relative Cell Addresses**: Always use `range.get_Address(false, false)` to obtain range addresses in relative format (without `$` signs, e.g., `A1:B2` instead of `$A$1:$B$2`) to keep API response output concise and clean, unless absolute address format is explicitly required.
 
 ## 7. Exception Handling Guide
 * **RPC_E_CALL_REJECTED (0x80010001)**: If this exception is caught, it typically means the user is editing a cell (Cell Edit Mode), causing Excel to suspend the COM channel. The API should return a clear error message prompting the AI to request the user to press Enter to exit the cell editing mode.

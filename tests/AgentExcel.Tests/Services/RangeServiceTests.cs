@@ -514,7 +514,7 @@ public class RangeServiceTests : BaseTests
         var address = _service.ConvertToRange(_wbName, "Sheet1", "TableToRange");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$A$1:$B$2"));
+        Assert.That(address, Is.EqualTo("A1:B2"));
         var tables = _service.ListTables(_wbName, "Sheet1");
         Assert.That(tables.ContainsKey("Sheet1"), Is.False);
     }
@@ -676,7 +676,7 @@ public class RangeServiceTests : BaseTests
         var address = _service.Clear(_wbName, "Sheet1", null, "all");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$A$1:$B$2"));
+        Assert.That(address, Is.EqualTo("A1:B2"));
         var results = _service.ReadRange(_wbName, "Sheet1", "A1:B2");
         Assert.That(results, Is.Empty);
     }
@@ -746,7 +746,7 @@ public class RangeServiceTests : BaseTests
         var address = _service!.SetSelection(_wbName, "Sheet1", "B2:C3");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$B$2:$C$3"));
+        Assert.That(address, Is.EqualTo("B2:C3"));
     }
 
     [Test]
@@ -760,7 +760,7 @@ public class RangeServiceTests : BaseTests
         var address = _service!.SetSelection(_wbName, "Sheet1", "B2");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$B$2"));
+        Assert.That(address, Is.EqualTo("B2"));
     }
 
     [Test]
@@ -775,7 +775,7 @@ public class RangeServiceTests : BaseTests
         var address = _service.GetSelection(_wbName, "Sheet1");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$A$1:$B$2"));
+        Assert.That(address, Is.EqualTo("A1:B2"));
     }
 
     [Test]
@@ -851,7 +851,7 @@ public class RangeServiceTests : BaseTests
         var address = _service.Delete(_wbName, "Sheet1", "A1", "shift_left");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$A$1"));
+        Assert.That(address, Is.EqualTo("A1"));
         var results = _service.ReadRange(_wbName, "Sheet1", "A1:B1");
         Assert.That(results["A1"]?.ToString(), Is.EqualTo("B1_val"));
         Assert.That(results["B1"]?.ToString(), Is.EqualTo("C1_val"));
@@ -871,7 +871,7 @@ public class RangeServiceTests : BaseTests
         var address = _service.Delete(_wbName, "Sheet1", "A1", "shift_up");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$A$1"));
+        Assert.That(address, Is.EqualTo("A1"));
         var results = _service.ReadRange(_wbName, "Sheet1", "A1:A2");
         Assert.That(results["A1"]?.ToString(), Is.EqualTo("A2_val"));
         Assert.That(results["A2"]?.ToString(), Is.EqualTo("A3_val"));
@@ -890,7 +890,7 @@ public class RangeServiceTests : BaseTests
         var address = _service.Delete(_wbName, "Sheet1", "A1", "entire_row");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$1:$1"));
+        Assert.That(address, Is.EqualTo("1:1"));
         var results = _service.ReadRange(_wbName, "Sheet1", "A1");
         Assert.That(results["A1"]?.ToString(), Is.EqualTo("Row2"));
     }
@@ -908,7 +908,7 @@ public class RangeServiceTests : BaseTests
         var address = _service.Delete(_wbName, "Sheet1", "A1", "entire_column");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$A:$A"));
+        Assert.That(address, Is.EqualTo("A:A"));
         var results = _service.ReadRange(_wbName, "Sheet1", "A1");
         Assert.That(results["A1"]?.ToString(), Is.EqualTo("Col2"));
     }
@@ -955,7 +955,7 @@ public class RangeServiceTests : BaseTests
         var address = _service.Insert(_wbName, "Sheet1", "A1", "shift_right");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$A$1"));
+        Assert.That(address, Is.EqualTo("A1"));
         var results = _service.ReadRange(_wbName, "Sheet1", "A1:B1");
         Assert.That(results.GetValueOrDefault("A1")?.ToString(), Is.Null.Or.Empty);
         Assert.That(results.GetValueOrDefault("B1")?.ToString(), Is.EqualTo("A1_val"));
@@ -973,7 +973,7 @@ public class RangeServiceTests : BaseTests
         var address = _service.Insert(_wbName, "Sheet1", "A1", "shift_down");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$A$1"));
+        Assert.That(address, Is.EqualTo("A1"));
         var results = _service.ReadRange(_wbName, "Sheet1", "A1:A2");
         Assert.That(results.GetValueOrDefault("A1")?.ToString(), Is.Null.Or.Empty);
         Assert.That(results.GetValueOrDefault("A2")?.ToString(), Is.EqualTo("A1_val"));
@@ -991,7 +991,7 @@ public class RangeServiceTests : BaseTests
         var address = _service.Insert(_wbName, "Sheet1", "A1", "entire_row");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$1:$1"));
+        Assert.That(address, Is.EqualTo("1:1"));
         var results = _service.ReadRange(_wbName, "Sheet1", "A1:A2");
         Assert.That(results.GetValueOrDefault("A1")?.ToString(), Is.Null.Or.Empty);
         Assert.That(results.GetValueOrDefault("A2")?.ToString(), Is.EqualTo("Row1_val"));
@@ -1009,7 +1009,7 @@ public class RangeServiceTests : BaseTests
         var address = _service.Insert(_wbName, "Sheet1", "A1", "entire_column");
 
         // Assert
-        Assert.That(address, Is.EqualTo("$A:$A"));
+        Assert.That(address, Is.EqualTo("A:A"));
         var results = _service.ReadRange(_wbName, "Sheet1", "A1:B1");
         Assert.That(results.GetValueOrDefault("A1")?.ToString(), Is.Null.Or.Empty);
         Assert.That(results.GetValueOrDefault("B1")?.ToString(), Is.EqualTo("Col1_val"));

@@ -606,7 +606,7 @@ public class RangeService : ExcelServiceBase
             {
                 listObj = GetTable(workbookName, sheetName, table);
                 excelRange = listObj.Range;
-                string address = excelRange.get_Address();
+                string address = excelRange.get_Address(false, false);
                 listObj.Unlist();
                 return address;
             }
@@ -700,16 +700,16 @@ public class RangeService : ExcelServiceBase
 
             if (firstMatch != null)
             {
-                string firstAddress = firstMatch.get_Address();
+                string firstAddress = firstMatch.get_Address(false, false);
                 currentMatch = firstMatch;
 
                 while (currentMatch != null)
                 {
-                    results.Add(new FindResult(ws.Name, currentMatch.get_Address(), currentMatch.Value2?.ToString() ?? ""));
+                    results.Add(new FindResult(ws.Name, currentMatch.get_Address(false, false), currentMatch.Value2?.ToString() ?? ""));
 
                     Excel.Range? nextMatch = searchRange.FindNext(currentMatch);
 
-                    if (nextMatch != null && nextMatch.get_Address() == firstAddress)
+                    if (nextMatch != null && nextMatch.get_Address(false, false) == firstAddress)
                     {
                         SafeReleaseComObject(nextMatch);
                         break;
@@ -840,7 +840,7 @@ public class RangeService : ExcelServiceBase
                     throw new InvalidOperationException("Target range could not be determined.");
                 }
 
-                string address = excelRange.get_Address();
+                string address = excelRange.get_Address(false, false);
                 string type = (clearType ?? "all").Trim().ToLowerInvariant();
 
                 switch (type)
@@ -901,7 +901,7 @@ public class RangeService : ExcelServiceBase
                     throw new InvalidOperationException("Target range could not be determined.");
                 }
 
-                string address = excelRange.get_Address();
+                string address = excelRange.get_Address(false, false);
                 string shift = (shiftOption ?? "").Trim().ToLowerInvariant();
 
                 switch (shift)
@@ -929,7 +929,7 @@ public class RangeService : ExcelServiceBase
                         try
                         {
                             entireRow = excelRange.EntireRow;
-                            address = entireRow.get_Address();
+                            address = entireRow.get_Address(false, false);
                             entireRow.Delete();
                         }
                         finally
@@ -946,7 +946,7 @@ public class RangeService : ExcelServiceBase
                         try
                         {
                             entireCol = excelRange.EntireColumn;
-                            address = entireCol.get_Address();
+                            address = entireCol.get_Address(false, false);
                             entireCol.Delete();
                         }
                         finally
@@ -995,7 +995,7 @@ public class RangeService : ExcelServiceBase
                     throw new InvalidOperationException("Target range could not be determined.");
                 }
 
-                string address = excelRange.get_Address();
+                string address = excelRange.get_Address(false, false);
                 string shift = (shiftOption ?? "").Trim().ToLowerInvariant();
 
                 switch (shift)
@@ -1023,7 +1023,7 @@ public class RangeService : ExcelServiceBase
                         try
                         {
                             entireRow = excelRange.EntireRow;
-                            address = entireRow.get_Address();
+                            address = entireRow.get_Address(false, false);
                             entireRow.Insert();
                         }
                         finally
@@ -1040,7 +1040,7 @@ public class RangeService : ExcelServiceBase
                         try
                         {
                             entireCol = excelRange.EntireColumn;
-                            address = entireCol.get_Address();
+                            address = entireCol.get_Address(false, false);
                             entireCol.Insert();
                         }
                         finally
@@ -1325,7 +1325,7 @@ public class RangeService : ExcelServiceBase
                 if (selectionObj is Excel.Range r)
                 {
                     range = r;
-                    return range.get_Address();
+                    return range.get_Address(false, false);
                 }
                 else
                 {
@@ -1364,7 +1364,7 @@ public class RangeService : ExcelServiceBase
                 excelRange.Select();
                 excelRange.Activate();
 
-                return excelRange.get_Address();
+                return excelRange.get_Address(false, false);
             }
             finally
             {

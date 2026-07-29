@@ -133,7 +133,7 @@ public class FindReplaceTests : BaseTests
         Assert.That(results, Is.Not.Null);
         Assert.That(results.Count, Is.EqualTo(1));
         Assert.That(results[0].Sheet, Is.EqualTo("Sheet1"));
-        Assert.That(results[0].Address, Is.EqualTo("$A$1"));
+        Assert.That(results[0].Address, Is.EqualTo("A1"));
         Assert.That(results[0].Value, Is.EqualTo("target_value"));
     }
 
@@ -154,12 +154,12 @@ public class FindReplaceTests : BaseTests
 
         var sheet1Match = results.FirstOrDefault(r => r.Sheet == "Sheet1");
         Assert.That(sheet1Match, Is.Not.Null);
-        Assert.That(sheet1Match!.Address, Is.EqualTo("$A$1"));
+        Assert.That(sheet1Match!.Address, Is.EqualTo("A1"));
         Assert.That(sheet1Match.Value, Is.EqualTo("hello_world"));
 
         var sheet2Match = results.FirstOrDefault(r => r.Sheet == "Sheet2");
         Assert.That(sheet2Match, Is.Not.Null);
-        Assert.That(sheet2Match!.Address, Is.EqualTo("$B$2"));
+        Assert.That(sheet2Match!.Address, Is.EqualTo("B2"));
         Assert.That(sheet2Match.Value, Is.EqualTo("hello_world"));
     }
 
