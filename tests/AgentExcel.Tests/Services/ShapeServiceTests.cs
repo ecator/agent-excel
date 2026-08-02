@@ -318,4 +318,60 @@ public class ShapeServiceTests : BaseTests
             ExcelConnector.SafeReleaseComObject(sheets);
         }
     }
+
+    [Test]
+    public void ListShapes_WhenGroupedShapesExist_ReturnsRecursiveChildShapes()
+    {
+        // Arrange
+        var app = s_provider!.GetApp(createNew: false);
+        Assert.That(app, Is.Not.Null);
+        Excel.Workbooks? wbs = null;
+        Excel.Workbook? wb = null;
+        Excel.Sheets? sheets = null;
+        Excel.Worksheet? ws = null;
+        Excel.Shapes? shapes = null;
+        Excel.Shape? shape1 = null;
+        Excel.Shape? shape2 = null;
+        Excel.ShapeRange? shapeRange = null;
+        Excel.Shape? groupShape = null;
+        try
+        {
+            wbs = app.Workbooks;
+            wb = wbs[_wbName];
+            sheets = wb.Sheets;
+            ws = (Excel.Worksheet)sheets[SheetName];
+            shapes = ws.Shapes;
+
+            shape1 = shapes.AddShape(Microsoft.Office.Core.MsoAutoShapeType.msoShapeRectangle, 10, 10, 100, 50);
+            shape2 = shapes.AddShape(Microsoft.Office.Core.MsoAutoShapeType.msoShapeOval, 10, 150, 100, 50);
+
+            object[] shapeNames = [shape1.Name, shape2.Name];
+            shapeRange = shapes.Range[shapeNames];
+            groupShape = shapeRange.Group();
+
+            // Act
+            var list = _service!.ListShapes(_wbName, SheetName);
+
+            // Assert
+            Assert.That(list, Has.Count.EqualTo(1));
+            var groupInfo = list[0];
+            Assert.That(groupInfo.Type, Is.EqualTo("Group"));
+            Assert.That(groupInfo.Children, Is.Not.Null);
+            Assert.That(groupInfo.Children, Has.Count.EqualTo(2));
+
+            var childNames = groupInfo.Children!.Select(c => c.Name).ToList();
+            Assert.That(childNames, Does.Contain(shape1.Name));
+            Assert.That(childNames, Does.Contain(shape2.Name));
+        }
+        finally
+        {
+            ExcelConnector.SafeReleaseComObject(groupShape);
+            ExcelConnector.SafeReleaseComObject(shapeRange);
+            ExcelConnector.SafeReleaseComObject(shape2);
+            ExcelConnector.SafeReleaseComObject(shape1);
+            ExcelConnector.SafeReleaseComObject(shapes);
+            ExcelConnector.SafeReleaseComObject(ws);
+            ExcelConnector.SafeReleaseComObject(sheets);
+        }
+    }
 }

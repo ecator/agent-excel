@@ -11,6 +11,7 @@ namespace AgentExcel.Models;
 /// <param name="Height">Height of the shape in points.</param>
 /// <param name="Text">The text inside the shape, if any.</param>
 /// <param name="Connection">Flowchart connection details if the shape is a connector.</param>
+/// <param name="Children">Child shapes contained inside this shape if it is a grouped shape.</param>
 public record ShapeInfo(
     string Name,
     string Type,
@@ -19,5 +20,6 @@ public record ShapeInfo(
     float Width,
     float Height,
     string? Text,
-    ShapeConnectionInfo? Connection = null
+    ShapeConnectionInfo? Connection = null,
+    List<ShapeInfo>? Children = null
 );

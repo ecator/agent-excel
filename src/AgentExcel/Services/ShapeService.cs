@@ -27,32 +27,7 @@ public class ShapeService : ExcelServiceBase
 
                 foreach (Excel.Shape shape in shapes)
                 {
-                    string? text = null;
-                    try
-                    {
-                        var tf = shape.TextFrame;
-                        var chars = tf.Characters();
-                        text = chars.Text;
-                        SafeReleaseComObject(chars);
-                        SafeReleaseComObject(tf);
-                    }
-                    catch
-                    {
-                        // Ignore shapes that don't support text frames
-                    }
-
-                    ShapeConnectionInfo? connection = GetShapeConnectionInfo(shape);
-
-                    result.Add(new ShapeInfo(
-                        shape.Name,
-                        GetShapeTypeName(shape),
-                        (float)shape.Left,
-                        (float)shape.Top,
-                        (float)shape.Width,
-                        (float)shape.Height,
-                        text,
-                        connection
-                    ));
+                    result.Add(BuildShapeInfo(shape));
                     SafeReleaseComObject(shape);
                 }
                 return result;
@@ -99,15 +74,7 @@ public class ShapeService : ExcelServiceBase
                     SafeReleaseComObject(tf);
                 }
 
-                return new ShapeInfo(
-                    shape.Name,
-                    GetShapeTypeName(shape),
-                    (float)shape.Left,
-                    (float)shape.Top,
-                    (float)shape.Width,
-                    (float)shape.Height,
-                    text
-                );
+                return BuildShapeInfo(shape);
             }
             finally
             {
@@ -146,32 +113,7 @@ public class ShapeService : ExcelServiceBase
                     SafeReleaseComObject(tf);
                 }
 
-                string? currentText = null;
-                try
-                {
-                    var tf = shape.TextFrame;
-                    var chars = tf.Characters();
-                    currentText = chars.Text;
-                    SafeReleaseComObject(chars);
-                    SafeReleaseComObject(tf);
-                }
-                catch
-                {
-                    // Ignore text frame errors
-                }
-
-                ShapeConnectionInfo? connection = GetShapeConnectionInfo(shape);
-
-                return new ShapeInfo(
-                    shape.Name,
-                    GetShapeTypeName(shape),
-                    (float)shape.Left,
-                    (float)shape.Top,
-                    (float)shape.Width,
-                    (float)shape.Height,
-                    currentText,
-                    connection
-                );
+                return BuildShapeInfo(shape);
             }
             finally
             {
@@ -180,6 +122,73 @@ public class ShapeService : ExcelServiceBase
                 SafeReleaseComObject(wb);
             }
         });
+    }
+
+    private ShapeInfo BuildShapeInfo(Excel.Shape shape)
+    {
+        string? text = null;
+        try
+        {
+            var tf = shape.TextFrame;
+            var chars = tf.Characters();
+            text = chars.Text;
+            SafeReleaseComObject(chars);
+            SafeReleaseComObject(tf);
+        }
+        catch
+        {
+            // Ignore shapes that don't support text frames
+        }
+
+        ShapeConnectionInfo? connection = GetShapeConnectionInfo(shape);
+
+        List<ShapeInfo>? children = null;
+        if (shape.Type == Microsoft.Office.Core.MsoShapeType.msoGroup)
+        {
+            Excel.GroupShapes? groupItems = null;
+            try
+            {
+                groupItems = shape.GroupItems;
+                int count = groupItems.Count;
+                if (count > 0)
+                {
+                    children = new List<ShapeInfo>();
+                    for (int i = 1; i <= count; i++)
+                    {
+                        Excel.Shape? childShape = null;
+                        try
+                        {
+                            childShape = groupItems.Item(i);
+                            children.Add(BuildShapeInfo(childShape));
+                        }
+                        finally
+                        {
+                            SafeReleaseComObject(childShape);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore shapes where GroupItems cannot be accessed
+            }
+            finally
+            {
+                SafeReleaseComObject(groupItems);
+            }
+        }
+
+        return new ShapeInfo(
+            shape.Name,
+            GetShapeTypeName(shape),
+            (float)shape.Left,
+            (float)shape.Top,
+            (float)shape.Width,
+            (float)shape.Height,
+            text,
+            connection,
+            children
+        );
     }
 
     public void DeleteShape(string workbookName, string sheetName, string shapeName)
