@@ -134,6 +134,8 @@ AgentExcel.exe stop
 
 ## Important Guidelines & Troubleshooting
 
+- **Excel Date & Time Handling**: When writing dates to Excel, pass standard formatted strings (such as `yyyy/MM/dd` or `yyyy/MM/dd HH:mm:ss`) directly without converting to serial numbers. Only convert to/from serial numbers when you explicitly need to inspect or calculate underlying Excel date serials. For detailed rules and helper script usage, see [datetime.md](references/datetime.md).
+
 - **Startup Delay**: If the daemon has just started, but calling the `api` subcommand fails or reports the service is offline, wait 2–3 seconds for the HTTP server to fully bind, then try again.
 - **Transient COM Connection Errors**: If you encounter errors like `Excel process started but failed to connect via COM.`, retry the command.
 - **Job Object Restrictions & Subprocess Termination**: If you are running in an environment with Job Object limits (which automatically terminates all child processes started by the command line when the task or tool execution finishes), the daemon service may fail to start, or Excel may fail to open/remain open. If you experience repeated startup failures or Excel file opening failures, please use `scripts\Start-Server.ps1` and `scripts\Open-File.ps1` instead.
@@ -160,4 +162,10 @@ $OutputEncoding = [System.Text.UTF8Encoding]::new()
 
 ```powershell
 Get-Content -Raw -Encoding utf8 request.json | AgentExcel.exe post /range/write --stdin
+```
+
+- **Executing Non-UTF-8 BOM PowerShell Scripts**: Windows PowerShell 5.1 only parses UTF-8 scripts properly if they include a BOM. If your generated script contains non-ASCII characters, execute it using the following pattern:
+
+```powershell
+Get-Content -Raw -Encoding UTF8 script.ps1 | Invoke-Expression
 ```
