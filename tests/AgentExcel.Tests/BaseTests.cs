@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 
 [assembly: NUnit.Framework.NonParallelizable]
 
@@ -10,6 +11,11 @@ namespace AgentExcel.Tests;
 /// </summary>
 public abstract class BaseTests
 {
+    static BaseTests()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+    }
+
     /// <summary>
     /// Gets the absolute path to the TestData directory.
     /// </summary>

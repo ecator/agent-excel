@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 
 using AgentExcel.Commands;
 using AgentExcel.Endpoints;
@@ -22,6 +23,8 @@ class Program
 
     static async Task Main(string[] args)
     {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         if (args.Length > 0)
         {
             string command = args[0].ToLower();
