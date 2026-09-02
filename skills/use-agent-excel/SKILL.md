@@ -1,6 +1,6 @@
 ---
 name: use-agent-excel
-description: Use AgentExcel to handle Excel files
+description: Automate and interact with Microsoft Excel (.xlsx, .xls, .xlsm) and active workbooks via AgentExcel. Activate when the user asks to read, write, edit, format, or automate Excel files, sheets, cells, ranges, formulas, or currently open workbooks.
 license: MIT
 metadata:
     author: ecat
