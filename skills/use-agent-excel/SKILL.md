@@ -4,7 +4,7 @@ description: Automate and interact with Microsoft Excel (.xlsx, .xls, .xlsm) and
 license: MIT
 metadata:
     author: ecat
-    version: "0.6.2"
+    version: "0.7.0"
 ---
 
 # Use AgentExcel
