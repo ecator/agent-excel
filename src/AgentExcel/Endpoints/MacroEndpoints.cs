@@ -26,6 +26,6 @@ public static class MacroEndpoints
         macros.MapPost("/list", (WorkbookRequest req, MacroService macroService) =>
             Results.Extensions.Yaml(macroService.ListMacros(req.Workbook)))
             .WithTags("Macros")
-            .WithSummary("List all macros and their parameters in the workbook");
+            .WithSummary("List all macros and their parameters across all components (Module, Class, Form, Document) in the workbook");
     }
 }
