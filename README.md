@@ -37,6 +37,13 @@ graph LR
     C -->|COM / RPC| D
 ```
 
+## Design Philosophy: What You See Is What AI Sees
+
+AgentExcel is built on the principle of seamless, real-time human-AI collaboration on live spreadsheets:
+
+- **Shared Excel Instance**: The AI operates directly within the exact same Excel process and active workbooks you are working on, eliminating disconnected background copies or file-sync issues.
+- **Visual Transparency (`Visible = true`)**: By deliberately operating with `Visible = true`, you can visually observe every action the AI performs in Excel in real time. This delivers complete transparency, instant feedback, and allows you to seamlessly intervene or take over at any moment.
+
 ## Installation
 
 Please download [use-agent-excel.zip](https://github.com/ecator/agent-excel/releases/latest) and extract it to your agent's skills folder (e.g., `.agents/skills`).
